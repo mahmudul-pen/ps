@@ -1,0 +1,490 @@
+- generic [active] [ref=f5e1]:
+  - navigation "Sections" [ref=f5e3]:
+    - link "Property Scanner, back to top" [ref=f5e4] [cursor=pointer]:
+      - /url: "#top"
+    - list [ref=f5e7]:
+      - listitem [ref=f5e8]:
+        - link "The scan" [ref=f5e9] [cursor=pointer]:
+          - /url: "#top"
+      - listitem [ref=f5e11]:
+        - link "The problem" [ref=f5e12] [cursor=pointer]:
+          - /url: "#problem"
+      - listitem [ref=f5e14]:
+        - link "One sentence" [ref=f5e15] [cursor=pointer]:
+          - /url: "#compare"
+      - listitem [ref=f5e17]:
+        - link "How it works" [ref=f5e18] [cursor=pointer]:
+          - /url: "#how"
+      - listitem [ref=f5e20]:
+        - link "Commute" [ref=f5e21] [cursor=pointer]:
+          - /url: "#commute"
+      - listitem [ref=f5e23]:
+        - link "Facts and guesses" [ref=f5e24] [cursor=pointer]:
+          - /url: "#truth"
+      - listitem [ref=f5e26]:
+        - link "Street readings" [ref=f5e27] [cursor=pointer]:
+          - /url: "#streets"
+      - listitem [ref=f5e29]:
+        - link "Around London" [ref=f5e30] [cursor=pointer]:
+          - /url: "#around"
+      - listitem [ref=f5e32]:
+        - link "Try it" [ref=f5e33] [cursor=pointer]:
+          - /url: "#try"
+      - listitem [ref=f5e35]:
+        - link "Who it's for" [ref=f5e36] [cursor=pointer]:
+          - /url: "#people"
+      - listitem [ref=f5e38]:
+        - link "Questions" [ref=f5e39] [cursor=pointer]:
+          - /url: "#faq"
+      - listitem [ref=f5e41]:
+        - link "Book a demo" [ref=f5e42] [cursor=pointer]:
+          - /url: "#demo"
+    - link "Book a demo" [ref=f5e44] [cursor=pointer]:
+      - /url: "#demo"
+  - main [ref=f5e45]:
+    - generic [ref=f5e46]:
+      - generic [ref=f5e47]:
+        - generic [ref=f5e48]: Property Scanner
+        - generic [aria-hidden] [ref=f5e51]: Drag the city to look around
+      - generic [ref=f5e55]:
+        - heading "Say what home feels like. We’ll scan London for it." [level=1] [ref=f5e56]:
+          - generic [ref=f5e57]: Say what home
+          - generic [ref=f5e59]: feels like.
+          - generic [ref=f5e61]: We’ll scan London for it.
+        - paragraph [ref=f5e63]: Property Scanner turns the way you actually talk about a home into a live search of London listings. Refine it by chat, see what’s known and what’s guessed, and send the enquiry.
+        - generic [ref=f5e64]:
+          - link "Book a demo" [ref=f5e65] [cursor=pointer]:
+            - /url: "#demo"
+          - link "Watch it scan" [ref=f5e68] [cursor=pointer]:
+            - /url: "#problem"
+      - figure "Example search" [ref=f5e71]:
+        - generic [ref=f5e72]:
+          - generic [ref=f5e73]: Your words
+          - generic [ref=f5e74]: Illustrative
+        - paragraph [ref=f5e75]: A quiet street, three beds, somewhere the kids can walk to a good primary. Under £650k.
+        - generic [ref=f5e77]: Read as
+        - list [ref=f5e78]:
+          - listitem [ref=f5e79]: 3 bed
+          - listitem [ref=f5e80]: Low-traffic street
+          - listitem [ref=f5e81]: Primary ≤ 10 min walk
+          - listitem [ref=f5e82]: ≤ £650k
+        - paragraph [ref=f5e83]: — homes scanned · — match
+    - generic [ref=f5e85]:
+      - heading "Buyers think in feelings. Portals think in filters." [level=2] [ref=f5e86]:
+        - generic [ref=f5e87]: Buyers think in feelings.
+        - generic [ref=f5e88]: Portals think in filters.
+      - generic [aria-hidden] [ref=f5e89]:
+        - generic [ref=f5e90]:
+          - generic [ref=f5e91]: “somewhere with morning light”
+          - generic [ref=f5e92]:
+            - generic [ref=f5e93]: Orientation
+            - generic [ref=f5e94]: Any
+        - generic [ref=f5e97]:
+          - generic [ref=f5e98]: “a street that feels safe at night”
+          - generic [ref=f5e99]:
+            - generic [ref=f5e100]: Radius
+            - generic [ref=f5e101]: 1 mile
+        - generic [ref=f5e104]:
+          - generic [ref=f5e105]: “quiet, but not dead”
+          - generic [ref=f5e106]:
+            - generic [ref=f5e107]: Property type
+            - generic [ref=f5e108]: Any
+        - generic [ref=f5e111]:
+          - generic [ref=f5e112]: “close enough to walk the kids to school”
+          - generic [ref=f5e113]:
+            - generic [ref=f5e114]: Bedrooms
+            - generic [ref=f5e115]: 3+
+        - generic [ref=f5e118]:
+          - generic [ref=f5e119]: “a kitchen we'd actually cook in”
+          - generic [ref=f5e120]:
+            - generic [ref=f5e121]: Keywords
+            - generic [ref=f5e122]: kitchen
+        - generic [ref=f5e125]:
+          - generic [ref=f5e126]: “room for a desk that isn't the bed”
+          - generic [ref=f5e127]:
+            - generic [ref=f5e128]: Max price
+            - generic [ref=f5e129]: £650,000
+      - list [ref=f5e132]:
+        - listitem [ref=f5e133]: "“somewhere with morning light” becomes Orientation: Any"
+        - listitem [ref=f5e134]: "“a street that feels safe at night” becomes Radius: 1 mile"
+        - listitem [ref=f5e135]: "“quiet, but not dead” becomes Property type: Any"
+        - listitem [ref=f5e136]: "“close enough to walk the kids to school” becomes Bedrooms: 3+"
+        - listitem [ref=f5e137]: "“a kitchen we'd actually cook in” becomes Keywords: kitchen"
+        - listitem [ref=f5e138]: "“room for a desk that isn't the bed” becomes Max price: £650,000"
+      - paragraph [ref=f5e139]: Light, noise, the walk to school. None of it fits in a dropdown, so you scroll. For months.
+    - generic [ref=f5e140]:
+      - heading "Same search. One sentence." [level=2] [ref=f5e141]
+      - generic [ref=f5e142]:
+        - generic [ref=f5e143]:
+          - heading "On a portal" [level=3] [ref=f5e144]
+          - list [ref=f5e145]:
+            - listitem [ref=f5e146]:
+              - generic [ref=f5e147]: Location
+              - generic [ref=f5e148]: London
+            - listitem [ref=f5e149]:
+              - generic [ref=f5e150]: Radius
+              - generic [ref=f5e151]: +1 mile
+            - listitem [ref=f5e152]:
+              - generic [ref=f5e153]: Min price
+              - generic [ref=f5e154]: No min
+            - listitem [ref=f5e155]:
+              - generic [ref=f5e156]: Max price
+              - generic [ref=f5e157]: £650,000
+            - listitem [ref=f5e158]:
+              - generic [ref=f5e159]: Min beds
+              - generic [ref=f5e160]: "3"
+            - listitem [ref=f5e161]:
+              - generic [ref=f5e162]: Max beds
+              - generic [ref=f5e163]: No max
+            - listitem [ref=f5e164]:
+              - generic [ref=f5e165]: Property type
+              - generic [ref=f5e166]: Houses
+            - listitem [ref=f5e167]:
+              - generic [ref=f5e168]: Added to site
+              - generic [ref=f5e169]: Anytime
+            - listitem [ref=f5e170]:
+              - generic [ref=f5e171]: Include under offer
+              - generic [ref=f5e172]: "No"
+            - listitem [ref=f5e173]:
+              - generic [ref=f5e174]: Must haves
+              - generic [ref=f5e175]: Garden
+            - listitem [ref=f5e176]:
+              - generic [ref=f5e177]: Don't show
+              - generic [ref=f5e178]: Retirement homes
+            - listitem [ref=f5e179]:
+              - generic [ref=f5e180]: Keywords
+              - generic [ref=f5e181]: quiet?
+          - paragraph [ref=f5e182]: Twelve dropdowns. Not one of them asks how the street feels.
+        - generic [ref=f5e183]:
+          - heading "On Property Scanner" [level=3] [ref=f5e184]
+          - paragraph [ref=f5e185]: “Three-bed with a garden on a quiet road, ten minutes’ walk to a good primary, under £650k. Somewhere that feels friendly.”
+          - list [ref=f5e186]:
+            - listitem [ref=f5e187]: 3 bed
+            - listitem [ref=f5e188]: Garden
+            - listitem [ref=f5e189]: Low-traffic street
+            - listitem [ref=f5e190]: Primary ≤ 10 min walk
+            - listitem [ref=f5e191]: ≤ £650k
+            - listitem [ref=f5e192]: Friendly street feel
+          - paragraph [ref=f5e193]: One sentence. The scan reads the rest, and tells you which parts it had to guess.
+    - generic [ref=f5e195]:
+      - heading "Four moves from a feeling to a viewing." [level=2] [ref=f5e196]
+      - list "Steps" [ref=f5e197]:
+        - listitem [ref=f5e198]:
+          - generic [ref=f5e199]: "1"
+          - text: Describe it once.
+        - listitem [ref=f5e200]:
+          - generic [ref=f5e201]: "2"
+          - text: Refine it by chat.
+        - listitem [ref=f5e202]:
+          - generic [ref=f5e203]: "3"
+          - text: Decide on the few.
+        - listitem [ref=f5e204]:
+          - generic [ref=f5e205]: "4"
+          - text: Send in one go.
+      - generic [ref=f5e206]:
+        - article:
+          - heading "1 Describe it once." [level=3]:
+            - generic: "1"
+            - text: Describe it once.
+          - paragraph: In your own words, the way you'd tell a friend. No dropdowns.
+          - generic:
+            - paragraph: We’re after a proper family house. Garden, three beds, quiet road, near a good primary. Zone 2 or 3, under £650k.
+            - paragraph: Scanning 1,940 London listings for that.
+        - article:
+          - heading "2 Refine it by chat." [level=3]:
+            - generic: "2"
+            - text: Refine it by chat.
+          - paragraph: Push back like you would with a good agent. The scan narrows as you talk.
+          - generic:
+            - paragraph: Nothing on a main road. And I’d take a garden over a second bathroom.
+            - paragraph: Done. Dropped 31 homes on A-roads and ranked gardens higher. 9 left.
+        - article:
+          - heading "3 Decide on the few." [level=3]:
+            - generic: "3"
+            - text: Decide on the few.
+          - paragraph: A shortlist ranked by what you said matters, with the reasons shown.
+          - generic:
+            - generic:
+              - generic: Victorian terrace, Leyton E10
+              - generic: £625,000
+            - paragraph: 3 bed · 1 bath · 14 m garden
+            - list:
+              - listitem:
+                - text: Garden
+                - emphasis: from the listing
+              - listitem:
+                - text: 8 min walk to a primary
+                - emphasis: estimated
+              - listitem:
+                - text: Quiet street
+                - emphasis: 70% sure
+        - article:
+          - heading "4 Send in one go." [level=3]:
+            - generic: "4"
+            - text: Send in one go.
+          - paragraph: We draft the enquiry. You read it, tweak it, send it.
+          - generic:
+            - paragraph: "To: Leyton branch · Viewing request, Ashby Road"
+            - paragraph: Hi, we’d love to view on Saturday morning. We’re chain-free with a mortgage in principle, and the garden is exactly what we’ve been looking for.
+            - generic: Sent
+      - paragraph [ref=f5e207]: Listings, prices and messages shown are illustrative.
+    - generic [ref=f5e210]:
+      - heading "Commute, not a radius." [level=2] [ref=f5e211]:
+        - text: Commute,
+        - generic [ref=f5e212]: not a radius.
+      - paragraph [ref=f5e213]: Portals draw a circle on a map. You live by a timetable. The scan measures how far you can get, door to door, by the routes you’d actually take.
+      - list [ref=f5e214]:
+        - listitem [ref=f5e215]:
+          - generic [ref=f5e218]: 1-mile radius
+          - text: the portal way
+        - listitem [ref=f5e219]:
+          - generic [ref=f5e222]: 25 minutes door to door
+          - text: along roads and rail
+      - paragraph [ref=f5e223]: Illustrative reach, not a real journey planner result.
+    - generic [ref=f5e225]:
+      - generic [ref=f5e226]:
+        - heading "Show what’s known. Label what’s guessed." [level=2] [ref=f5e227]:
+          - generic [ref=f5e228]: Show what’s known.
+          - generic [ref=f5e229]: Label what’s guessed.
+        - paragraph [ref=f5e230]: Every fact carries its source. Anything we estimate says it’s an estimate, with how sure we are. You never mistake a guess for a fact.
+        - list [ref=f5e231]:
+          - listitem [ref=f5e232]:
+            - generic [ref=f5e235]: Solid
+            - text: means it came from the listing or an official record.
+          - listitem [ref=f5e236]:
+            - generic [ref=f5e239]: Dashed
+            - text: means we worked it out, and we show our confidence.
+      - generic [aria-hidden]:
+        - generic:
+          - text: 3 bedrooms
+          - emphasis: from the listing
+        - generic:
+          - text: £625,000 asking
+          - emphasis: from the listing
+        - generic:
+          - text: Quiet street
+          - emphasis: from traffic data · 70% sure
+        - generic:
+          - text: 8 min walk to a primary
+          - emphasis: estimated from map data
+    - generic [ref=f5e241]:
+      - generic [ref=f5e242]:
+        - heading "Read a street before you visit." [level=2] [ref=f5e243]:
+          - text: Read a street
+          - generic [ref=f5e244]: before you visit.
+        - paragraph [ref=f5e245]: Every street gets a reading. Facts are solid, guesses are dashed and come with a confidence score. These five streets are made up, to show the format.
+      - generic [ref=f5e246]:
+        - article [ref=f5e247]:
+          - heading "Ashby Road" [level=3] [ref=f5e255]
+          - paragraph [ref=f5e256]: Victorian terraces
+          - list [ref=f5e257]:
+            - listitem [ref=f5e258]:
+              - generic [ref=f5e261]:
+                - text: Mostly 3-bed terraces
+                - emphasis [ref=f5e262]: from listings
+            - listitem [ref=f5e263]:
+              - generic [ref=f5e266]:
+                - text: Quiet after 8pm
+                - emphasis [ref=f5e267]: traffic data · 70% sure
+            - listitem [ref=f5e269]:
+              - generic [ref=f5e272]:
+                - text: Park, 4 min walk
+                - emphasis [ref=f5e273]: map data · 90% sure
+            - listitem [ref=f5e275]:
+              - generic [ref=f5e278]:
+                - text: Freehold
+                - emphasis [ref=f5e279]: from the listing
+        - article [ref=f5e280]:
+          - heading "Linden Grove" [level=3] [ref=f5e288]
+          - paragraph [ref=f5e289]: Pastel terraces
+          - list [ref=f5e290]:
+            - listitem [ref=f5e291]:
+              - generic [ref=f5e294]:
+                - text: South-facing gardens
+                - emphasis [ref=f5e295]: from listings
+            - listitem [ref=f5e296]:
+              - generic [ref=f5e299]:
+                - text: Morning light at the front
+                - emphasis [ref=f5e300]: sun path · 80% sure
+            - listitem [ref=f5e302]:
+              - generic [ref=f5e305]:
+                - text: Primary, 6 min walk
+                - emphasis [ref=f5e306]: map data · 85% sure
+            - listitem [ref=f5e308]:
+              - generic [ref=f5e311]:
+                - text: Conservation area
+                - emphasis [ref=f5e312]: council record
+        - article [ref=f5e313]:
+          - heading "Mercer Street" [level=3] [ref=f5e321]
+          - paragraph [ref=f5e322]: Mansion flats
+          - list [ref=f5e323]:
+            - listitem [ref=f5e324]:
+              - generic [ref=f5e327]:
+                - text: Lift in the building
+                - emphasis [ref=f5e328]: from the listing
+            - listitem [ref=f5e329]:
+              - generic [ref=f5e332]:
+                - text: Busy road at the end
+                - emphasis [ref=f5e333]: traffic data · 75% sure
+            - listitem [ref=f5e335]:
+              - generic [ref=f5e338]:
+                - text: Station, 5 min walk
+                - emphasis [ref=f5e339]: map data · 95% sure
+            - listitem [ref=f5e341]:
+              - generic [ref=f5e344]:
+                - text: Leasehold, 120 years
+                - emphasis [ref=f5e345]: from the listing
+        - article [ref=f5e346]:
+          - heading "Calder Terrace" [level=3] [ref=f5e354]
+          - paragraph [ref=f5e355]: Ex-council blocks
+          - list [ref=f5e356]:
+            - listitem [ref=f5e357]:
+              - generic [ref=f5e360]:
+                - text: Balconies on every flat
+                - emphasis [ref=f5e361]: from listings
+            - listitem [ref=f5e362]:
+              - generic [ref=f5e365]:
+                - text: Green space behind
+                - emphasis [ref=f5e366]: map data · 90% sure
+            - listitem [ref=f5e368]:
+              - generic [ref=f5e371]:
+                - text: Calm, family street
+                - emphasis [ref=f5e372]: local reviews · 60% sure
+            - listitem [ref=f5e374]:
+              - generic [ref=f5e377]:
+                - text: Share of freehold
+                - emphasis [ref=f5e378]: from the listing
+        - article [ref=f5e379]:
+          - heading "Wren Mews" [level=3] [ref=f5e387]
+          - paragraph [ref=f5e388]: Converted stables
+          - list [ref=f5e389]:
+            - listitem [ref=f5e390]:
+              - generic [ref=f5e393]:
+                - text: Cobbled, car-free lane
+                - emphasis [ref=f5e394]: map data · 95% sure
+            - listitem [ref=f5e396]:
+              - generic [ref=f5e399]:
+                - text: Small or no gardens
+                - emphasis [ref=f5e400]: from listings
+            - listitem [ref=f5e401]:
+              - generic [ref=f5e404]:
+                - text: Very quiet at night
+                - emphasis [ref=f5e405]: traffic data · 80% sure
+            - listitem [ref=f5e407]:
+              - generic [ref=f5e410]:
+                - text: Freehold
+                - emphasis [ref=f5e411]: from the listing
+    - generic [ref=f5e413]:
+      - heading "Search by what’s near. Not by postcode." [level=2] [ref=f5e414]
+      - list "Places" [ref=f5e415]:
+        - listitem [ref=f5e416]:
+          - generic [ref=f5e417]: "1"
+          - text: Westminster
+        - listitem [ref=f5e418]:
+          - generic [ref=f5e419]: "2"
+          - text: The City
+        - listitem [ref=f5e420]:
+          - generic [ref=f5e421]: "3"
+          - text: Hyde Park
+      - generic [ref=f5e422]:
+        - article:
+          - heading "1 Westminster" [level=3]:
+            - generic: "1"
+            - text: Westminster
+          - generic:
+            - paragraph: Somewhere I can walk along the river after work.
+            - paragraph: Read as Thames path ≤ 10 min walk
+        - article:
+          - heading "2 The City" [level=3]:
+            - generic: "2"
+            - text: The City
+          - generic:
+            - paragraph: Twenty minutes to the office, door to door. Bank, near St Paul's.
+            - paragraph: Read as ≤ 20 min to Bank by Tube or on foot
+        - article:
+          - heading "3 Hyde Park" [level=3]:
+            - generic: "3"
+            - text: Hyde Park
+          - generic:
+            - paragraph: A proper park for the dog, not a patch of grass.
+            - paragraph: Read as Large park ≤ 10 min walk
+      - paragraph [ref=f5e423]: Examples are illustrative. Landmarks are stylised.
+    - generic [ref=f5e425]:
+      - heading "Try it in your own words." [level=2] [ref=f5e426]:
+        - text: Try it in
+        - generic [ref=f5e427]: your own words.
+      - paragraph [ref=f5e428]: Type what you’d tell a friend. See how it reads, then watch London scan for it.
+      - generic [ref=f5e429]:
+        - generic [ref=f5e430]: Describe the home you want
+        - textbox "Describe the home you want" [ref=f5e431]:
+          - /placeholder: A bright flat near a park, two beds, under £500k, 25 minutes to King's Cross.
+        - button "Scan London" [ref=f5e432] [cursor=pointer]
+      - generic [ref=f5e435]:
+        - generic [ref=f5e436]: Or try
+        - button "Two-bed flat with a balcony, 20 min to Canary Wharf" [ref=f5e437] [cursor=pointer]
+        - button "Family house near a park and a good primary, under £800k" [ref=f5e438] [cursor=pointer]
+        - button "Somewhere quiet with lots of light, close to a station" [ref=f5e439] [cursor=pointer]
+      - generic [ref=f5e440]:
+        - generic [ref=f5e441]: Read as
+        - list [ref=f5e442]:
+          - listitem [ref=f5e443]: Waiting for your words
+        - paragraph [ref=f5e444]
+      - paragraph [ref=f5e445]: This demo only matches keywords, and the results are illustrative.
+    - generic [ref=f5e446]:
+      - heading "Made for three kinds of London buyer." [level=2] [ref=f5e447]
+      - list [ref=f5e448]:
+        - listitem [ref=f5e449]:
+          - heading "The time-poor buyer" [level=3] [ref=f5e450]
+          - paragraph [ref=f5e451]: “Just find me three that are worth a Saturday.”
+          - paragraph [ref=f5e452]: Describe it once on the bus. Get a shortlist, not a feed.
+        - listitem [ref=f5e453]:
+          - heading "The careful first-time buyer" [level=3] [ref=f5e454]
+          - paragraph [ref=f5e455]: “Is the quiet street actually quiet, or did the agent just say so?”
+          - paragraph [ref=f5e456]: Every fact shows its source. Every guess says it’s a guess.
+        - listitem [ref=f5e457]:
+          - heading "The relocating family" [level=3] [ref=f5e458]
+          - paragraph [ref=f5e459]: “We don’t know London. We know we want a park and a good primary.”
+          - paragraph [ref=f5e460]: Search by how a place feels, in a city you’ve never lived in.
+    - generic [ref=f5e461]:
+      - heading "Questions buyers ask." [level=2] [ref=f5e462]
+      - generic [ref=f5e463]:
+        - group [ref=f5e464]:
+          - generic "Where does it work?" [ref=f5e465] [cursor=pointer]
+        - group [ref=f5e468]:
+          - generic "What do I actually type?" [ref=f5e469] [cursor=pointer]
+        - group [ref=f5e472]:
+          - generic "How do I know what's real?" [ref=f5e473] [cursor=pointer]
+        - group [ref=f5e476]:
+          - generic "Does it replace estate agents?" [ref=f5e477] [cursor=pointer]
+        - group [ref=f5e480]:
+          - generic "Can I see it working?" [ref=f5e481] [cursor=pointer]
+    - generic [ref=f5e484]:
+      - generic [ref=f5e485]:
+        - heading "Launching in London first." [level=2] [ref=f5e486]: Launching inLondon first.
+        - paragraph [ref=f5e487]: One city, done properly. Book a demo and we’ll run a live scan for the home you’re actually looking for.
+      - generic [ref=f5e488]:
+        - generic [ref=f5e489]:
+          - generic [ref=f5e490]: Your name
+          - textbox "Your name" [ref=f5e491]
+        - generic [ref=f5e492]:
+          - generic [ref=f5e493]: Email
+          - textbox "Email" [ref=f5e494]
+        - generic [ref=f5e495]:
+          - generic [ref=f5e496]: I’m a
+          - combobox "I’m a" [ref=f5e497]:
+            - option "Buyer in London" [selected]
+            - option "Estate agent"
+            - option "Investor or partner"
+        - generic [ref=f5e498]:
+          - generic [ref=f5e499]:
+            - text: What are you looking for?
+            - emphasis [ref=f5e500]: Optional
+          - textbox "What are you looking for? Optional" [ref=f5e501]:
+            - /placeholder: Say it the way you'd tell a friend.
+        - button "Book a demo" [ref=f5e502] [cursor=pointer]
+  - contentinfo [ref=f5e503]:
+    - generic [ref=f5e504]: Property Scanner
+    - paragraph [ref=f5e507]: Listings, prices and messages on this page are illustrative examples.
+    - paragraph [ref=f5e508]: © 2026 Property Scanner
+  - button "Open Next.js Dev Tools" [ref=f5e514] [cursor=pointer]
+  - alert [ref=f5e518]
