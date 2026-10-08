@@ -55,18 +55,81 @@ const PORTAL = [
 ];
 
 // Made-up streets: these readings only show the format, never real data about a real place.
-const STREETS: { name: string; type: string; facades: string[]; readings: [string, string, boolean, number?][] }[] = [
-  { name: "Ashby Road", type: "Victorian terraces", facades: ["#8a4636", "#9b5a42", "#8a4636", "#b9a88a", "#9b5a42", "#6e3b30"],
+type Roof = "gable" | "flat" | "block" | "mews";
+const STREETS: { name: string; type: string; roof: Roof; accent: string; sky: [string, string]; facades: string[]; readings: [string, string, boolean, number?][] }[] = [
+  { name: "Ashby Road", type: "Victorian terraces", roof: "gable", accent: "#e0714f", sky: ["#f4a46a", "#fbd9a8"], facades: ["#8a4636", "#9b5a42", "#8a4636", "#b9a88a", "#9b5a42", "#6e3b30"],
     readings: [["Mostly 3-bed terraces", "from listings", false], ["Quiet after 8pm", "traffic data", true, 70], ["Park, 4 min walk", "map data", true, 90], ["Freehold", "from the listing", false]] },
-  { name: "Linden Grove", type: "Pastel terraces", facades: ["#d9a3a0", "#9dc7b4", "#a7bfdc", "#bba7cf", "#e8cf9a", "#d9a3a0"],
+  { name: "Linden Grove", type: "Pastel terraces", roof: "gable", accent: "#ef8fa6", sky: ["#8fc8ee", "#e4f2fb"], facades: ["#d9a3a0", "#9dc7b4", "#a7bfdc", "#bba7cf", "#e8cf9a", "#d9a3a0"],
     readings: [["South-facing gardens", "from listings", false], ["Morning light at the front", "sun path", true, 80], ["Primary, 6 min walk", "map data", true, 85], ["Conservation area", "council record", false]] },
-  { name: "Mercer Street", type: "Mansion flats", facades: ["#e3dccb", "#e3dccb", "#b9a88a", "#e3dccb", "#e3dccb", "#b9a88a"],
+  { name: "Mercer Street", type: "Mansion flats", roof: "flat", accent: "#e8b84a", sky: ["#6f7fc0", "#d6b6c9"], facades: ["#e3dccb", "#e3dccb", "#b9a88a", "#e3dccb", "#e3dccb", "#b9a88a"],
     readings: [["Lift in the building", "from the listing", false], ["Busy road at the end", "traffic data", true, 75], ["Station, 5 min walk", "map data", true, 95], ["Leasehold, 120 years", "from the listing", false]] },
-  { name: "Calder Terrace", type: "Ex-council blocks", facades: ["#7f6a58", "#8a4636", "#7f6a58", "#7f6a58", "#8a4636", "#7f6a58"],
+  { name: "Calder Terrace", type: "Ex-council blocks", roof: "block", accent: "#5cbf86", sky: ["#5fa6cf", "#c8ead9"], facades: ["#7f6a58", "#8a4636", "#7f6a58", "#7f6a58", "#8a4636", "#7f6a58"],
     readings: [["Balconies on every flat", "from listings", false], ["Green space behind", "map data", true, 90], ["Calm, family street", "local reviews", true, 60], ["Share of freehold", "from the listing", false]] },
-  { name: "Wren Mews", type: "Converted stables", facades: ["#a7bfdc", "#e3dccb", "#9dc7b4", "#e3dccb", "#e8cf9a", "#e3dccb"],
+  { name: "Wren Mews", type: "Converted stables", roof: "mews", accent: "#6aa6f0", sky: ["#2d3b78", "#c88a9b"], facades: ["#a7bfdc", "#e3dccb", "#9dc7b4", "#e3dccb", "#e8cf9a", "#e3dccb"],
     readings: [["Cobbled, car-free lane", "map data", true, 95], ["Small or no gardens", "from listings", false], ["Very quiet at night", "traffic data", true, 80], ["Freehold", "from the listing", false]] },
 ];
+const DOORS = ["#c8102e", "#1d3a6b", "#1f5a3a", "#141414", "#e0b43c", "#6b2d5c"];
+
+/** A small street scene for each card: the facades in its palette, lit windows, trees, a passing car. */
+function StreetArt({ id, roof, sky, facades }: { id: number; roof: Roof; sky: [string, string]; facades: string[] }) {
+  const G = 128;
+  return (
+    <svg viewBox="0 0 360 170" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs>
+        <linearGradient id={`sky${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={sky[0]} /><stop offset="1" stopColor={sky[1]} /></linearGradient>
+      </defs>
+      <rect width="360" height="170" fill={`url(#sky${id})`} />
+      <circle className="sun" cx={id % 2 ? 70 : 292} cy="38" r="15" fill="#fff3c4" />
+      <path d="M0 112h22v-26h14v14h18v-30h12v42h30v-18h20v-12h16v30h26v-22h18v28h30v-36h14v36h24v-20h22v26h30v-16h18v22h26v10H0z" fill="rgb(255 255 255 / 0.18)" />
+      {facades.map((c, i) => {
+        const x = 6 + i * 58, w = 54;
+        const h = (roof === "block" ? 92 : roof === "mews" ? 44 : roof === "flat" ? 74 : 58) + ((i * 37) % 22);
+        const top = G - h;
+        const rows = Math.max(1, Math.floor((h - 26) / 22));
+        return (
+          <g className="house" key={i} style={{ "--d": i } as React.CSSProperties}>
+            <rect x={x} y={top} width={w} height={h} fill={c} />
+            <rect x={x} y={top} width={w * 0.18} height={h} fill="rgb(0 0 0 / 0.08)" />
+            {roof === "gable" || roof === "mews" ? (
+              <>
+                <rect x={x + w - 14} y={top - 22} width="7" height="16" fill="#5a3a30" />
+                <path d={`M${x - 3} ${top}L${x + w / 2} ${top - 17}L${x + w + 3} ${top}z`} fill={roof === "mews" ? "#55606e" : "#4a3f3b"} />
+              </>
+            ) : (
+              <rect x={x - 2} y={top - 5} width={w + 4} height="6" fill="rgb(255 255 255 / 0.55)" />
+            )}
+            {Array.from({ length: rows }, (_, r) =>
+              [0, 1].map((k) => (
+                <rect key={`${r}${k}`} className={`win${(i + r + k) % 3 ? "" : " lit"}`} style={{ "--w": r * 2 + k + i } as React.CSSProperties}
+                  x={x + 9 + k * 24} y={top + 10 + r * 22} width="12" height="14" rx={roof === "mews" ? 6 : 1} />
+              )),
+            )}
+            {roof === "block" && Array.from({ length: rows }, (_, r) => <rect key={`b${r}`} x={x + 4} y={top + 23 + r * 22} width={w - 8} height="2.5" fill="rgb(255 255 255 / 0.6)" />)}
+            <rect x={x + (i % 2 ? 8 : w - 20)} y={G - 20} width="12" height="20" rx={roof === "mews" ? 6 : 0} fill={DOORS[(i + id) % DOORS.length]} />
+          </g>
+        );
+      })}
+      <rect y={G} width="360" height="7" fill="#9b968a" />
+      <rect y={G + 7} width="360" height="40" fill="#2a2926" />
+      {Array.from({ length: 9 }, (_, i) => <rect key={i} x={i * 42 + 8} y={G + 25} width="20" height="2.5" fill="#d9d3c3" opacity="0.6" />)}
+      {[[118, 1], [252, 0.85]].map(([tx, sc], i) => (
+        <g className="tree" key={i} style={{ "--d": i + 3 } as React.CSSProperties}>
+          <rect x={tx - 2} y={G - 30 * sc} width="4" height={30 * sc} fill="#4b3a2a" />
+          <circle cx={tx} cy={G - 34 * sc} r={15 * sc} fill="#3f7a4a" />
+          <circle cx={tx - 8 * sc} cy={G - 28 * sc} r={10 * sc} fill="#4f8f55" />
+          <circle cx={tx + 7 * sc} cy={G - 40 * sc} r={9 * sc} fill="#5fa062" />
+        </g>
+      ))}
+      <g className="car">
+        <rect x="0" y={G + 12} width="46" height="12" rx="4" fill={id === 2 ? "#141414" : "#c8102e"} />
+        <path d={`M8 ${G + 12}l6-8h18l7 8z`} fill={id === 2 ? "#141414" : "#c8102e"} />
+        <rect x="15" y={G + 6} width="7" height="5" fill="#bcd7ea" /><rect x="24" y={G + 6} width="8" height="5" fill="#bcd7ea" />
+        <circle cx="11" cy={G + 25} r="4.5" fill="#111" /><circle cx="36" cy={G + 25} r="4.5" fill="#111" />
+        <rect x="43" y={G + 15} width="3" height="3" fill="#fff2c0" />
+      </g>
+    </svg>
+  );
+}
 
 // Example wishes only: the readings show the format, not real journey or distance data.
 const STOPS = [
@@ -100,7 +163,15 @@ export default function Home() {
   return (
     <>
       <canvas id="stage" aria-hidden="true" />
+      <div className="scrim" aria-hidden="true" />
       <Experience />
+
+      <div className="hud3d" aria-hidden="true">
+        {[["best", "Best fit", "94%"], ["", "Second", "88%"], ["", "Third", "81%"]].map(([cls, label, fit], i) => (
+          <div className={`rank ${cls}`} key={i}><div><b>{i + 1}</b>{label} · {fit}</div></div>
+        ))}
+        <div className="branch"><div><i />Leyton branch<em>Enquiry delivered</em></div></div>
+      </div>
 
       <nav className="dock" aria-label="Sections">
         <a href="#top" className="dock-brand" aria-label="Property Scanner, back to top"><Mark /></a>
@@ -164,10 +235,12 @@ export default function Home() {
             <div className="feelings" aria-hidden="true">
               {FEELINGS.map(([feel, label, value], i) => (
                 <div className="feeling" key={i} style={{ "--i": i } as React.CSSProperties}>
-                  <span className="feel">&ldquo;{feel}&rdquo;</span>
+                  <span className="feel"><i />&ldquo;{feel}&rdquo;</span>
                   <span className="filt"><span>{label}</span><b>{value}<svg viewBox="0 0 10 10"><path d="M2 4l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg></b></span>
+                  <span className="sweep" />
                 </div>
               ))}
+              <p className="keep"><span>Feelings still in the search</span><b id="keep-n">6</b></p>
             </div>
             <ul className="sr-only">
               {FEELINGS.map(([feel, label, value]) => <li key={feel}>&ldquo;{feel}&rdquo; becomes {label}: {value}</li>)}
@@ -325,22 +398,24 @@ export default function Home() {
               <p>Every street gets a reading. Facts are solid, guesses are dashed and come with a confidence score. These five streets are made up, to show the format.</p>
             </div>
             <div className="street-track">
-              {STREETS.map((st) => (
-                <article className="street-card" key={st.name}>
-                  <div className="facades" aria-hidden="true">
-                    {st.facades.map((c, i) => <span key={i} style={{ "--c": c, "--h": `${62 + ((i * 37) % 28)}%` } as React.CSSProperties} />)}
+              {STREETS.map((st, n) => (
+                <article className="street-card" key={st.name} style={{ "--a": st.accent } as React.CSSProperties}>
+                  <div className="street-art">
+                    <StreetArt id={n} roof={st.roof} sky={st.sky} facades={st.facades} />
+                    <span className="street-no">0{n + 1} / 0{STREETS.length}</span>
                   </div>
-                  <h3>{st.name}</h3>
-                  <p className="street-type">{st.type}</p>
-                  <ul>
-                    {st.readings.map(([what, src, guess, conf]) => (
-                      <li key={what} className={guess ? "guess" : ""}>
-                        {guess ? <Guessed /> : <Known />}
-                        <span>{what}<em>{src}{conf ? ` · ${conf}% sure` : ""}</em></span>
-                        {conf ? <i className="conf" style={{ "--v": `${conf}%` } as React.CSSProperties} aria-hidden="true" /> : null}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="street-body">
+                    <div className="street-title"><h3>{st.name}</h3><span className="street-type">{st.type}</span></div>
+                    <ul>
+                      {st.readings.map(([what, src, guess, conf], k) => (
+                        <li key={what} className={guess ? "guess" : ""} style={{ "--k": k } as React.CSSProperties}>
+                          {guess ? <Guessed /> : <Known />}
+                          <span>{what}<em>{src}{conf ? ` · ${conf}% sure` : ""}</em></span>
+                          {conf ? <i className="conf" style={{ "--v": `${conf}%` } as React.CSSProperties} aria-hidden="true" /> : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </article>
               ))}
             </div>

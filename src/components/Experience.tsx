@@ -20,7 +20,7 @@ const BASE: SceneState = {
 
 type Key = { id: string; at: number; s: SceneState };
 
-function keyframes(P: { x: number; z: number }, narrow: boolean): Key[] {
+function keyframes(P: { x: number; z: number }, B: { x: number; z: number }, narrow: boolean): Key[] {
   const hero = BASE;
   // On portrait screens the copy sits below, so the home is framed in the upper half.
   const k = narrow ? { tx: P.x + 0.9, ty: -2.2, tz: P.z - 0.9 } : { tx: P.x - 0.7, ty: 0.8, tz: P.z + 0.7 };
@@ -28,7 +28,14 @@ function keyframes(P: { x: number; z: number }, narrow: boolean): Key[] {
   const describe: SceneState = { ...BASE, cx: P.x + 18, cy: 15, cz: P.z + 24, tx: P.x - 2, ty: 0, tz: P.z - 3, orbit: 0.4 };
   const refine: SceneState = { ...describe, cx: P.x + 13, cy: 12, cz: P.z + 17, tx: P.x - 1.5, tz: P.z + 1.5, narrow: 1, orbit: 0.2 };
   const decide: SceneState = { ...refine, cx: P.x + 9, cy: 9, cz: P.z + 12, tx: P.x - 1.6, ty: 0.6, tz: P.z + 1.6, focus: 1, dim: 1, orbit: 0, scan: 0.4 };
-  const send: SceneState = { ...decide, cx: P.x + 10, cy: 9, cz: P.z + 14, tx: P.x + 5, ty: 6, tz: P.z - 6, arc: 1 };
+  // Send: a side-on view of the flight from the home to the branch, framed right of the copy.
+  const mx = (P.x + B.x) / 2, mz = (P.z + B.z) / 2;
+  const len = Math.hypot(B.x - P.x, B.z - P.z) || 1;
+  let px = -(B.z - P.z) / len, pz = (B.x - P.x) / len;
+  if (pz < 0) { px = -px; pz = -pz; }
+  const shift = narrow ? 0 : 3;
+  const sendA: SceneState = { ...decide, cx: mx + px * 19, cy: 10, cz: mz + pz * 19, tx: mx + pz * shift * -1, ty: 3.6, tz: mz + px * shift, arc: 0 };
+  const send: SceneState = { ...sendA, cx: mx + px * 16, cy: 8.8, cz: mz + pz * 16, arc: 1 };
   const known: SceneState = { ...decide, cx: P.x + 3.6, cy: 3.6, cz: P.z + 4.6, ...k, arc: 0, scan: 0 };
   const examined: SceneState = { ...known, wire: 1 };
   const examinedEnd: SceneState = { ...examined, cx: P.x + 2.2, cy: 3.9, cz: P.z + 5.4 };
@@ -65,7 +72,8 @@ function keyframes(P: { x: number; z: number }, narrow: boolean): Key[] {
     { id: "how", at: 0.47, s: refine },
     { id: "how", at: 0.6, s: decide },
     { id: "how", at: 0.72, s: decide },
-    { id: "how", at: 0.86, s: send },
+    { id: "how", at: 0.82, s: sendA },
+    { id: "how", at: 0.97, s: send },
     { id: "how", at: 1, s: send },
     { id: "commute", at: 0, s: commuteA },
     { id: "commute", at: 0.15, s: commuteA },
@@ -125,7 +133,7 @@ export default function Experience() {
 
     // --- Scroll -> scene state
     const narrow = innerWidth < 900;
-    const keys = stage ? keyframes(stage.focusPos, narrow) : [];
+    const keys = stage ? keyframes(stage.focusPos, stage.branchPos, narrow) : [];
     let anchors: number[] = [];
     const measure = () => {
       const vh = innerHeight;
@@ -200,6 +208,11 @@ export default function Experience() {
       });
     };
 
+    // --- Ranked shortlist while deciding, and the branch label when the enquiry lands
+    const rankEls = Array.from(document.querySelectorAll<HTMLElement>(".rank"));
+    const shortlist = stage ? stage.shortlist() : [];
+    const branchEl = document.querySelector<HTMLElement>(".branch")!;
+
     // --- Labels pinned to the chosen home
     const tags = Array.from(document.querySelectorAll<HTMLElement>(".tag3d")).map((el) => {
       const [x, y, z] = el.dataset.anchor!.split(",").map(Number);
@@ -232,6 +245,15 @@ export default function Experience() {
         a.style.setProperty("--p", String(p));
         if (p > 0 && p < 1) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
       });
+      const deciding = state.focus > 0.7 && state.wire < 0.2 && state.arc < 0.03;
+      rankEls.forEach((el, i) => {
+        const s = stage!.projectWorld(shortlist[i]);
+        el.style.transform = `translate3d(${s.x}px, ${s.y}px, 0)`;
+        el.classList.toggle("on", deciding && !s.behind);
+      });
+      const b = stage!.projectWorld({ x: stage!.branchPos.x, y: stage!.branchPos.y + 4.5, z: stage!.branchPos.z });
+      branchEl.style.transform = `translate3d(${b.x}px, ${b.y}px, 0)`;
+      branchEl.classList.toggle("on", state.arc > 0.97 && !b.behind);
       const show = state.wire > 0.6 && !reduced;
       tags.forEach(({ el, p }) => {
         const s = stage!.project(p);
@@ -264,40 +286,88 @@ export default function Experience() {
       const feelings = gsap.utils.toArray<HTMLElement>(".feeling");
       // Each loose quote gets its own row, shuffled, so none overlap before they snap into place.
       const rows = [2, 0, 4, 1, 5, 3];
-      const xs = narrow ? [0, 0, 0, 0, 0, 0] : [-55, -10, -35, -60, -5, -30];
+      const xs = narrow ? [0, 0, 0, 0, 0, 0] : [26, -6, 34, 2, 22, 10];
       const rot = [-6, 5, 4, -7, -3, 6];
       const tl = gsap.timeline({ scrollTrigger: { trigger: "#problem", start: "top top", end: "bottom bottom", scrub: reduced ? true : 0.6 } });
+      const keepN = document.getElementById("keep-n")!;
+      const convertAt = (i: number) => 1.15 + i * 0.1;
       feelings.forEach((el, i) => {
-        tl.fromTo(el, { xPercent: xs[i], yPercent: (rows[i] - i) * 118, rotation: narrow ? rot[i] / 2 : rot[i], scale: 1.04 }, { xPercent: 0, yPercent: 0, rotation: 0, scale: 1, ease: "power3.inOut", duration: 1 }, 0.25 + i * 0.04);
-        tl.fromTo(el.querySelector(".feel"), { autoAlpha: 1, filter: "blur(0px)" }, { autoAlpha: 0, filter: "blur(6px)", duration: 0.35 }, 0.95 + i * 0.04);
-        tl.fromTo(el.querySelector(".filt"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.35 }, 1.05 + i * 0.04);
+        tl.fromTo(el, { xPercent: xs[i], yPercent: (rows[i] - i) * 118, rotation: narrow ? rot[i] / 2 : rot[i], scale: 1.04 }, { xPercent: 0, yPercent: 0, rotation: 0, scale: 1, ease: "power3.inOut", duration: 1 }, 0.2 + i * 0.04);
+        // A scan line crosses the row, eating the feeling and leaving a filter behind it.
+        const sweep = el.querySelector(".sweep")!;
+        tl.fromTo(el, { "--p": 0 }, { "--p": 1, ease: "power2.inOut", duration: 0.5 }, convertAt(i));
+        tl.fromTo(sweep, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.05 }, convertAt(i));
+        tl.to(sweep, { autoAlpha: 0, duration: 0.08 }, convertAt(i) + 0.45);
+        // The unsorted quotes bob on their own clock until the scan reaches them.
+        if (!reduced) gsap.to(el.querySelector(".feel"), { y: 7, duration: 2.2 + i * 0.3, ease: "sine.inOut", yoyo: true, repeat: -1, delay: i * 0.2 });
       });
-      tl.fromTo(".problem-title .voice", { autoAlpha: 1 }, { autoAlpha: 0.28, duration: 0.6 }, 0.9);
-      tl.fromTo(".problem-coda", { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.5 }, 1.55);
-      tl.to({}, { duration: 0.3 });
+      tl.eventCallback("onUpdate", () => {
+        keepN.textContent = String(feelings.filter((_, i) => tl.time() < convertAt(i) + 0.25).length);
+      });
+      tl.fromTo(".problem-title .voice", { autoAlpha: 1 }, { autoAlpha: 0.28, duration: 0.6 }, 1.1);
+      tl.fromTo(".keep", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, 0.5);
+      tl.fromTo(".problem-coda", { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.5 }, 1.95);
+      tl.to({}, { duration: 0.35 });
 
+      // A step's card performs when it comes into focus: words type out, replies and rows arrive after.
+      const performing = new Map<Element, gsap.core.Timeline>();
+      const playStep = (el: HTMLElement) => {
+        performing.get(el)?.kill();
+        const tl = gsap.timeline();
+        performing.set(el, tl);
+        const typed = Array.from(el.querySelectorAll<HTMLElement>(".bubble.you, .ui-mail .voice"));
+        const rest = el.querySelectorAll(".bubble.sys, .ui-sheet li, .sent");
+        gsap.set(rest, { autoAlpha: 0, y: 10 });
+        let at = 0.3;
+        typed.forEach((node) => {
+          const full = (node.dataset.full ??= node.textContent ?? "");
+          const n = { v: 0 };
+          const dur = full.length * 0.016;
+          node.textContent = "";
+          tl.to(n, { v: full.length, duration: dur, ease: "none", onUpdate: () => { node.textContent = full.slice(0, Math.round(n.v)); } }, at);
+          at += dur + 0.25;
+        });
+        tl.to(rest, { autoAlpha: 1, y: 0, duration: 0.7, ease: "expo.out", stagger: 0.16 }, at);
+        const sent = el.querySelector(".sent");
+        if (sent) tl.fromTo(sent, { scale: 0.7 }, { scale: 1, duration: 0.6, ease: "back.out(3)" }, at);
+      };
+      const activate = (el: HTMLElement, on: boolean) => {
+        if (on && !el.hasAttribute("data-active") && !reduced && el.classList.contains("step")) playStep(el);
+        el.toggleAttribute("data-active", on);
+      };
       // Steps follow the camera through the four moves.
       const stepEls = document.querySelectorAll<HTMLElement>("#how .step, #how .rail li");
       // onRefresh too, so a reload that restores the scroll mid-section shows the right step.
       const setStep = (self: ScrollTrigger) => {
         const p = self.progress;
         const active = String(p < 0.3 ? 1 : p < 0.54 ? 2 : p < 0.79 ? 3 : 4);
-        stepEls.forEach((el) => el.toggleAttribute("data-active", el.dataset.step === active));
+        stepEls.forEach((el) => activate(el, el.dataset.step === active));
       };
       ScrollTrigger.create({ trigger: "#how", start: "top top", end: "bottom bottom", onUpdate: setStep, onRefresh: setStep });
       const stopEls = document.querySelectorAll<HTMLElement>("#around [data-stop]");
       const setStop = (self: ScrollTrigger) => {
         const active = String(self.progress < 0.34 ? 1 : self.progress < 0.68 ? 2 : 3);
-        stopEls.forEach((el) => el.toggleAttribute("data-active", el.dataset.stop === active));
+        stopEls.forEach((el) => activate(el, el.dataset.stop === active));
       };
       ScrollTrigger.create({ trigger: "#around", start: "top top", end: "bottom bottom", onUpdate: setStop, onRefresh: setStop });
 
       const track = document.querySelector<HTMLElement>(".street-track");
       if (track) {
-        gsap.to(track, {
+        // The cards start just off the right edge and drive in one by one.
+        const drive = gsap.fromTo(track, { x: () => innerWidth }, {
           x: () => -(track.scrollWidth - innerWidth),
           ease: "none",
           scrollTrigger: { trigger: "#streets", start: "top top", end: "bottom bottom", scrub: reduced ? true : 0.5, invalidateOnRefresh: true },
+        });
+        // Each card swings round to face you as it passes, and builds its street while it's in view.
+        gsap.utils.toArray<HTMLElement>(".street-card").forEach((card) => {
+          if (reduced) { card.classList.add("on"); return; }
+          gsap.fromTo(card, { rotationY: -16, rotationZ: 1.5, y: 24 }, {
+            keyframes: [{ rotationY: 0, rotationZ: 0, y: 0, ease: "power2.out" }, { rotationY: 14, rotationZ: -1.5, y: 24, ease: "power2.in" }],
+            transformPerspective: 1100, ease: "none",
+            scrollTrigger: { trigger: card, containerAnimation: drive, start: "left right", end: "right left", scrub: true },
+          });
+          ScrollTrigger.create({ trigger: card, containerAnimation: drive, start: "left 82%", end: "right -10%", toggleClass: { targets: card, className: "on" } });
         });
       }
       gsap.utils.toArray<HTMLElement>(".commute").forEach((sec) => {

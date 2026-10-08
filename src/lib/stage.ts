@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
@@ -16,8 +16,9 @@ export type SceneState = {
 const INK = new THREE.Color("#0a0a09");
 const YELLOW = new THREE.Color("#ffd400");
 // London at dusk: brick, stucco, Notting Hill pastels, slate and tile roofs, glass towers.
-const WALLS = ["#8a4636", "#9b5a42", "#6e3b30", "#b9a88a", "#e3dccb", "#d9a3a0", "#9dc7b4", "#a7bfdc", "#bba7cf", "#e8cf9a", "#7f6a58"];
-const ROOFS = ["#47505c", "#3c424b", "#8e4b37", "#5a5f66"];
+// London brick and stock brick, white stucco, and the Notting Hill / Primrose Hill pastels.
+const WALLS = ["#94452f", "#a65a3e", "#7a3a2a", "#cdb27a", "#d9c08c", "#ece6d6", "#f1ebdf", "#e6a5a8", "#a6d6bf", "#a9c8ea", "#c4b0dc", "#f0d58e", "#e98d74", "#7fb7b0", "#8a6a52"];
+const ROOFS = ["#4a525e", "#3c424b", "#a2533c", "#5a5f66", "#7a4a3a", "#56606b"];
 const GLASS = ["#5f7891", "#7590a8", "#8b929a", "#4d6278"];
 const FLATS = ["#8a7f72", "#a39a8c", "#6f6a66", "#9b6a52", "#c9c2b4", "#7c5444"];
 const FOG = 0.0017;
@@ -47,8 +48,6 @@ export const deckY = (d: number) => {
 };
 // Westminster: Parliament runs along the north bank, Big Ben at the foot of Westminster Bridge (x = -11.1).
 const PARLIAMENT_X = [-9.7, -2.6];
-/** The Serpentine, as an ellipse inside Hyde Park. */
-const inLake = (x: number, z: number) => Math.hypot((x + 23.5) * 0.33, (z + 15) * 1.4) < 1;
 const STATION = new THREE.Vector3(24, 0, 12);
 
 const COLORSPACE = /* glsl */ `
@@ -211,6 +210,9 @@ const houseFrag = /* glsl */ `
     col = mix(col, uYellow * (0.6 + 0.35 * diff), m);
     float band = exp(-abs(vW.x - uBeamX) * 2.5) * uScan * step(abs(vW.z), 48.0);
     col += uYellow * band * 0.22;
+    // A touch more colour and warmth than plain lighting gives: late-afternoon London.
+    float luma = dot(col, vec3(0.299, 0.587, 0.114));
+    col = mix(vec3(luma), col, 1.18) * vec3(1.04, 1.0, 0.95);
     float fd = dist * uFog;
     col = mix(col, uHaze, 1.0 - exp(-fd * fd));
     gl_FragColor = vec4(col, 1.0);
@@ -282,7 +284,6 @@ const groundFrag = /* glsl */ `
   ${SKY}
   uniform vec3 uYellow;
   uniform float uTime;
-  uniform vec3 uPark;
   uniform float uBeamX;
   uniform float uScan;
   uniform float uDim;
@@ -292,24 +293,69 @@ const groundFrag = /* glsl */ `
   float aa(float d, float w) { return 1.0 - smoothstep(w - fwidth(d), w + fwidth(d), d); }
   void main() {
     vec2 p = vW.xz;
-    vec3 col = vec3(0.24, 0.235, 0.22);
+    float side = p.y - riverZ(p.x);
+    float rd = abs(side);
     // Streets run every 9 units north-south of the river grid and every 11.1 units east-west.
     float rz = abs(mod(p.y + 4.5, 9.0) - 4.5);
     float rx = abs(mod(p.x + 5.55, 11.1) - 5.55);
+    // Between the streets: back gardens, shrubs and patios; in the City, paved squares.
+    float n1 = noise(p * 1.1), n2 = noise(p * 3.7 + 11.0);
+    vec3 garden = mix(vec3(0.2, 0.31, 0.12), vec3(0.32, 0.43, 0.17), n1);
+    garden = mix(garden, vec3(0.14, 0.22, 0.09), smoothstep(0.55, 0.8, n2) * 0.8);
+    garden = mix(garden, vec3(0.52, 0.48, 0.42), smoothstep(0.72, 0.9, noise(p * 2.3 + 4.0)) * 0.7);
+    vec3 paving = vec3(0.5, 0.48, 0.44) + 0.05 * (n2 - 0.5);
+    float city = 1.0 - smoothstep(9.0, 13.0, length(p - vec2(9.0, -6.0)));
+    vec3 col = mix(garden, paving, city);
+    // Lawns: Jubilee Gardens under the Eye, St Paul's churchyard.
+    vec3 lawn = mix(vec3(0.27, 0.45, 0.16), vec3(0.37, 0.54, 0.2), noise(p * 0.8));
+    lawn *= 0.94 + 0.06 * step(0.5, fract((p.x + p.y) * 1.4));
+    float jubilee = (1.0 - smoothstep(6.6, 7.0, abs(p.x + 19.5))) * smoothstep(4.3, 4.6, side) * (1.0 - smoothstep(9.0, 9.4, side));
+    float yard = (1.0 - smoothstep(4.5, 4.8, abs(p.x - 5.55))) * (1.0 - smoothstep(3.5, 3.8, abs(p.y + 22.5)));
+    col = mix(col, lawn, max(jubilee, yard));
+    // Pavements line every road; the road itself, with its markings and kerbs.
+    col = mix(col, vec3(0.53, 0.51, 0.48) + 0.03 * n2, max(aa(rz, 1.3), aa(rx, 1.18)));
     float road = max(aa(rz, 0.95), aa(rx, 0.85));
     col = mix(col, vec3(0.1, 0.1, 0.105), road);
     float dashZ = aa(rz, 0.035) * step(0.5, fract(p.x * 0.7)) * (1.0 - aa(rx, 0.85));
     float dashX = aa(rx, 0.035) * step(0.5, fract(p.y * 0.7)) * (1.0 - aa(rz, 0.95));
     col += vec3(0.6, 0.58, 0.52) * max(dashZ, dashX);
     float kerb = max(aa(abs(rz - 0.95), 0.03), aa(abs(rx - 0.85), 0.03));
-    col += vec3(0.05) * kerb;
-    float park = 1.0 - smoothstep(5.6, 6.0, length((p - vec2(-24.0, -16.0)) * vec2(1.0, 1.15)));
-    col = mix(col, uPark, park);
-    // The Serpentine, rippling a little in the breeze.
-    float lake = 1.0 - smoothstep(0.92, 1.0, length((p - vec2(-23.5, -15.0)) * vec2(0.33, 1.4)));
-    col = mix(col, vec3(0.2, 0.34, 0.42) + 0.04 * noise(p * 3.0 + uTime * 0.4), lake);
-    float side = p.y - riverZ(p.x);
-    float rd = abs(side);
+    col += vec3(0.08) * kerb;
+    // Hyde Park: mown lawns, tree-lined paths, flower beds, a hedge at the railings.
+    vec2 pc = p - vec2(-24.0, -16.0);
+    float parkD = length(pc * vec2(1.0, 1.15));
+    float park = 1.0 - smoothstep(5.6, 5.9, parkD);
+    {
+      vec3 lp = mix(vec3(0.27, 0.45, 0.16), vec3(0.38, 0.55, 0.2), noise(p * 0.7));
+      lp = mix(lp, vec3(0.19, 0.33, 0.12), smoothstep(0.58, 0.85, noise(p * 2.1 + 7.0)) * 0.55);
+      lp *= 0.95 + 0.05 * step(0.5, fract((pc.x - pc.y) * 1.3));
+      float d1 = abs(dot(pc, vec2(0.41, 0.91)));
+      float d2 = abs(dot(pc - vec2(0.0, 2.6), vec2(0.97, -0.24)));
+      float d3 = abs(length((p - vec2(-23.5, -15.0)) * vec2(0.278, 0.8)) - 1.0) * 1.3;
+      float path = max(max(aa(d1, 0.085), aa(d2, 0.075)), aa(d3, 0.07)) * (1.0 - smoothstep(5.2, 5.5, parkD));
+      lp = mix(lp, vec3(0.8, 0.73, 0.58), path);
+      float bed = max(aa(length(pc - vec2(3.6, -2.4)), 0.5), aa(length(pc - vec2(-3.3, 2.9)), 0.42));
+      vec3 fl = mix(vec3(0.86, 0.18, 0.24), vec3(0.98, 0.76, 0.14), step(0.5, noise(p * 16.0)));
+      fl = mix(fl, vec3(0.62, 0.32, 0.8), step(0.68, noise(p * 11.0 + 3.0)));
+      lp = mix(lp, mix(vec3(0.16, 0.28, 0.1), fl, step(0.35, noise(p * 22.0))), bed);
+      lp = mix(lp, vec3(0.1, 0.18, 0.08), aa(abs(parkD - 5.72), 0.12));
+      col = mix(col, lp, park);
+    }
+    // The Serpentine: a stone shore, then water that mirrors the sky and ripples in the breeze.
+    float ld = length((p - vec2(-23.5, -15.0)) * vec2(0.33, 1.4));
+    col = mix(col, vec3(0.6, 0.57, 0.48), (1.0 - smoothstep(1.0, 1.1, ld)) * park);
+    float lake = 1.0 - smoothstep(0.94, 1.0, ld);
+    if (lake > 0.0) {
+      vec3 V = normalize(vW - cameraPosition);
+      vec2 g = vec2(noise(p * 4.0 + uTime * 0.3), noise(p * 4.0 - uTime * 0.25 + 5.0)) - 0.5;
+      vec3 wn = normalize(vec3(g.x * 0.3, 1.0, g.y * 0.3));
+      vec3 R = reflect(V, wn);
+      R.y = abs(R.y);
+      float fres = 0.04 + 0.96 * pow(1.0 - max(dot(-V, wn), 0.0), 5.0);
+      vec3 w = mix(vec3(0.09, 0.22, 0.25), skyCol(R) * 0.85, 0.25 + 0.6 * fres);
+      w += vec3(1.0, 0.96, 0.88) * pow(max(dot(R, uSunDir), 0.0), 200.0) * 0.5;
+      col = mix(col, w, lake);
+    }
     float river = 1.0 - smoothstep(3.25, 3.4, rd);
     if (river > 0.0) {
       // The Thames flows east: two layers of ripples drift downstream, faster mid-channel than at the banks.
@@ -638,6 +684,93 @@ function outskirts(rand: () => number, radius: number) {
   return lots;
 }
 
+function blobTexture() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(0.55, "rgba(0,0,0,.6)"); g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+}
+
+/** Leaf texture: dozens of small leaves with midribs, in greys so each tree can carry its own hue. */
+function leafTexture() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const ctx = c.getContext("2d")!;
+  let r = 3;
+  const rnd = () => ((r = (r * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 90; i++) {
+    const x = 20 + rnd() * 216, y = 20 + rnd() * 216, a = rnd() * Math.PI * 2, l = 13 + rnd() * 11, w = l * (0.38 + rnd() * 0.15);
+    if (Math.hypot(x - 128, y - 128) > 118) continue;
+    const g = 150 + rnd() * 105;
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(a);
+    ctx.fillStyle = `rgb(${g * 0.92},${g},${g * 0.88})`;
+    ctx.beginPath(); ctx.moveTo(-l, 0); ctx.quadraticCurveTo(0, -w, l, 0); ctx.quadraticCurveTo(0, w, -l, 0); ctx.fill();
+    ctx.strokeStyle = `rgba(40,40,30,0.35)`; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(-l * 0.9, 0); ctx.lineTo(l * 0.85, 0); ctx.stroke();
+    ctx.restore();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+/** A leafy crown: 0 a broad oak or plane, 1 a tall lime or poplar. Leaf cards fill an ellipsoid; normals point outward so it shades like a volume. */
+function leafCrown(kind: number, rand: () => number) {
+  const n = kind === 0 ? 110 : 70;
+  const rx = kind === 0 ? 0.52 : 0.28, ry = kind === 0 ? 0.44 : 0.72, cy = kind === 0 ? 1.0 : 1.12;
+  const size = kind === 0 ? 0.3 : 0.24;
+  const cards: THREE.BufferGeometry[] = [];
+  const e = new THREE.Euler();
+  for (let i = 0; i < n; i++) {
+    const d = new THREE.Vector3(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1);
+    if (d.lengthSq() > 1 || d.lengthSq() < 0.01) { i--; continue; }
+    d.normalize();
+    const lump = 1 + 0.16 * Math.sin(d.x * 5.3 + d.y * 3.1) * Math.sin(d.z * 4.7 - d.y * 2.3);
+    const rr = (0.6 + 0.4 * Math.sqrt(rand())) * lump;
+    const p = new THREE.Vector3(d.x * rx * rr, cy + d.y * ry * rr, d.z * rx * rr);
+    const g = new THREE.PlaneGeometry(size * (0.8 + rand() * 0.5), size * (0.8 + rand() * 0.5));
+    g.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(e.set(rand() * 6.3, rand() * 6.3, rand() * 6.3)));
+    g.translate(p.x, p.y, p.z);
+    const nrm = new THREE.Vector3(d.x, d.y + 0.35, d.z).normalize();
+    const b = (0.55 + 0.35 * (d.y * 0.5 + 0.5) + 0.15 * rr) * (0.9 + rand() * 0.2);
+    for (let k = 0; k < 4; k++) g.attributes.normal.setXYZ(k, nrm.x, nrm.y, nrm.z);
+    g.setAttribute("color", new THREE.BufferAttribute(new Float32Array([b, b, b, b, b, b, b, b, b, b, b, b]), 3));
+    cards.push(g);
+  }
+  // A dense inner core, so you never see daylight straight through the tree.
+  const core = new THREE.IcosahedronGeometry(1, 2).scale(rx * 0.78, ry * 0.78, rx * 0.78).translate(0, cy, 0);
+  const cc = new Float32Array(core.attributes.position.count * 3).fill(0.42);
+  core.setAttribute("color", new THREE.BufferAttribute(cc, 3));
+  return { leaves: mergeGeometries(cards)!, core };
+}
+
+/** A pine: stacked, slightly ragged tiers. */
+function pineGeometry() {
+  const parts: THREE.BufferGeometry[] = [];
+  for (let k = 0; k < 5; k++) parts.push(new THREE.ConeGeometry(0.4 - k * 0.07, 0.42, 10, 2).translate(0, 0.55 + k * 0.21, 0));
+  let g = mergeGeometries(parts.map((p) => { const q = p.toNonIndexed(); q.deleteAttribute("uv"); q.deleteAttribute("normal"); return q; }))!;
+  g = mergeVertices(g);
+  const pos = g.attributes.position;
+  const v = new THREE.Vector3();
+  const col = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const k = 1 + 0.14 * Math.sin(v.x * 23 + v.y * 17) * Math.sin(v.z * 19);
+    pos.setXYZ(i, v.x * k, v.y, v.z * k);
+    const b = 0.5 + 0.5 * (v.y - 0.3) / 1.3;
+    col.set([b, b, b], i * 3);
+  }
+  g.computeVertexNormals();
+  g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  return g;
+}
+
 export class Stage {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
@@ -670,19 +803,23 @@ export class Stage {
     uHaze: { value: new THREE.Color("#c6daef") },
     uSunDir: { value: new THREE.Vector3(0.45, 0.8, 0.35).normalize() },
     uFog: { value: FOG },
-    uPark: { value: new THREE.Color("#2e4a2f") },
   };
 
   private beam: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private columnsMat: THREE.ShaderMaterial;
   private points: THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial>;
-  private arc: THREE.Mesh<THREE.TubeGeometry, THREE.MeshBasicMaterial>;
-  private arcHead: THREE.Mesh;
+  private mail: THREE.Group;
+  private mailCurve: THREE.CubicBezierCurve3;
+  private trail: THREE.InstancedMesh;
+  private guide: THREE.Line<THREE.BufferGeometry, THREE.LineDashedMaterial>;
+  private beacon: THREE.Group;
+  readonly branchPos: THREE.Vector3;
   private pin: THREE.Group;
   private cars: Car[] = [];
   private fleet: THREE.InstancedMesh[][] = [];
   private boats: { x: number; dir: number; off: number; speed: number }[] = [];
   private boatMesh!: THREE.InstancedMesh;
+  private pedalos!: THREE.InstancedMesh;
   private commute!: THREE.Group;
   private commuteMats: THREE.Material[] = [];
   private beamLine!: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
@@ -914,43 +1051,106 @@ export class Stage {
     school.position.copy(SCHOOL);
     this.scene.add(school);
 
-    // --- Trees: the park, and London planes along the pavements. (x, scale, z)
-    const treeAt: THREE.Vector3[] = [];
-    for (let i = 0; i < 46; i++) {
-      const a = rand() * Math.PI * 2;
-      const r = Math.sqrt(rand()) * 4.8;
-      const tx = PARK.x + Math.cos(a) * r, tz = PARK.z + Math.sin(a) * r * 0.8;
-      const sc = 1.1 + rand() * 0.9;
-      if (!inLake(tx, tz)) treeAt.push(new THREE.Vector3(tx, sc, tz));
+    // --- Trees: only in Hyde Park. Oaks and planes along the paths, limes and pines in the clumps.
+    type Tree = { x: number; z: number; s: number; kind: number; tint?: THREE.Color };
+    const trees: Tree[] = [];
+    const spaced = (x: number, z: number, d: number) => trees.every((t) => Math.hypot(t.x - x, t.z - z) > d);
+    const inPark = (x: number, z: number) => {
+      const px = x - PARK.x, pz = z - PARK.z;
+      if (Math.hypot(px, pz * 1.15) > 5.25 || Math.hypot((x + 23.5) * 0.278, (z + 15) * 0.8) < 1.22) return false;
+      return Math.abs(px * 0.41 + pz * 0.91) > 0.24 && Math.abs(px * 0.97 - (pz - 2.6) * 0.24) > 0.22;
+    };
+    // Avenues along both park paths, then clumps around open lawns.
+    for (const [nx, nz, oz] of [[0.41, 0.91, 0], [0.97, -0.24, 2.6]]) {
+      for (let t = -5.4; t <= 5.4; t += 0.7) for (const off of [-0.46, 0.46]) {
+        const x = PARK.x + nz * t + nx * off, z = PARK.z + oz - nx * t + nz * off;
+        if (inPark(x, z) && spaced(x, z, 0.55)) trees.push({ x, z, s: 1.0 + rand() * 0.2, kind: 0 });
+      }
     }
-    for (let k = -4; k <= 4; k++) for (const kerb of [-1.15, 1.15]) for (let x = -62; x <= 62; x += 2.3) {
-      const tx = x + (rand() - 0.5) * 0.6;
-      const z = k * 9 + kerb;
-      if (rand() < 0.3 || Math.abs(tx - Math.round(tx / 11.1) * 11.1) < 1.6) continue;
-      if (Math.abs(z - riverZ(tx)) < RIVER_HALF + 1.2 || Math.hypot(tx, z * 1.3) > 74) continue;
-      if (Math.hypot(tx - this.focusPos.x, z - this.focusPos.z) < 4) continue;
-      if (Math.abs(tx - STATION.x) < 5.6 && Math.abs(z - STATION.z) < 3) continue;
-      if (Math.abs(tx - SCHOOL.x) < 3.6 && Math.abs(z - SCHOOL.z) < 3) continue;
-      if (Math.abs(tx - EYE_X) < 7.4 && z > riverZ(tx) && z - riverZ(tx) < 10) continue;
-      if (tx > PARLIAMENT_X[0] - 1 && tx < PARLIAMENT_X[1] + 1 && z - riverZ(tx) < -3 && z - riverZ(tx) > -8) continue;
-      if (Math.abs(tx - STPAULS.x) < 4.9 && Math.abs(z - STPAULS.z) < 3.9) continue;
-      treeAt.push(new THREE.Vector3(tx, 0.8 + rand() * 0.4, z));
+    for (let i = 0; i < 420; i++) {
+      const a = rand() * Math.PI * 2, r = Math.sqrt(rand()) * 5.3;
+      const x = PARK.x + Math.cos(a) * r, z = PARK.z + Math.sin(a) * r * 0.87;
+      const px = x - PARK.x, pz = z - PARK.z;
+      if (Math.hypot(px + 2.3, pz + 2.1) < 1.7 || Math.hypot(px - 2.5, pz - 2.2) < 1.3) continue; // open lawns
+      if (!inPark(x, z) || !spaced(x, z, 0.62)) continue;
+      const k = rand();
+      trees.push({ x, z, s: 1.0 + rand() * 0.75, kind: k < 0.64 ? 0 : k < 0.82 ? 1 : 2 });
     }
-    const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035, 0.05, 0.55, 5).translate(0, 0.27, 0), new THREE.MeshStandardMaterial({ color: "#3b2f26", roughness: 1 }), treeAt.length);
-    const crowns = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.34, 1).scale(1, 1.15, 1).translate(0, 0.8, 0), new THREE.MeshStandardMaterial({ roughness: 1, flatShading: true }), treeAt.length);
-    const leaf = new THREE.Color();
-    treeAt.forEach((p, i) => {
-      m.compose(new THREE.Vector3(p.x, 0, p.z), q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rand() * 6.3), new THREE.Vector3(p.y, p.y, p.y));
+    trees.forEach((t) => {
+      const autumn = rand() < 0.1;
+      t.tint = new THREE.Color().setHSL(
+        autumn ? 0.05 + rand() * 0.06 : t.kind === 2 ? 0.36 + rand() * 0.03 : 0.24 + rand() * 0.07,
+        autumn ? 0.7 : t.kind === 2 ? 0.35 : 0.42 + rand() * 0.2,
+        autumn ? 0.56 : t.kind === 2 ? 0.32 : 0.48 + rand() * 0.12,
+      );
+    });
+    // The canopy sways a little; a soft shadow sits under every tree.
+    const leafMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92 });
+    leafMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uTime = this.shared.uTime;
+      sh.vertexShader = "uniform float uTime;\n" + sh.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>
+        #ifdef USE_INSTANCING
+          vec2 ip = instanceMatrix[3].xz;
+          float sw = sin(uTime * 1.1 + ip.x * 0.7 + ip.y * 0.5) + 0.5 * sin(uTime * 2.3 + ip.x * 1.3);
+          transformed.xz += vec2(0.035, 0.02) * sw * max(position.y - 0.5, 0.0);
+        #endif`);
+    };
+    // Trunk with limbs reaching up into the crown.
+    const limb = (len: number, rz: number, ry: number, y: number) => new THREE.CylinderGeometry(0.012, 0.022, len, 5).translate(0, len / 2, 0).rotateZ(rz).rotateY(ry).translate(0, y, 0);
+    const trunkGeo = mergeGeometries([
+      new THREE.CylinderGeometry(0.03, 0.055, 0.7, 7).translate(0, 0.35, 0),
+      limb(0.42, 0.7, 0, 0.55), limb(0.4, 0.75, 2.1, 0.6), limb(0.38, 0.65, 4.2, 0.58), limb(0.3, 0.2, 1, 0.66),
+    ].map((g) => g.toNonIndexed()))!;
+    const trunks = new THREE.InstancedMesh(trunkGeo, new THREE.MeshStandardMaterial({ color: "#4f3d2e", roughness: 1 }), trees.length);
+    const leafy = leafMat.clone();
+    leafy.map = leafTexture();
+    leafy.alphaTest = 0.45;
+    leafy.side = THREE.DoubleSide;
+    leafy.onBeforeCompile = leafMat.onBeforeCompile;
+    const shapes = [leafCrown(0, rand), leafCrown(1, rand)];
+    const count = (k: number) => Math.max(1, trees.filter((t) => t.kind === k).length);
+    const crowns = [
+      new THREE.InstancedMesh(shapes[0].leaves, leafy, count(0)),
+      new THREE.InstancedMesh(shapes[1].leaves, leafy, count(1)),
+      new THREE.InstancedMesh(pineGeometry(), leafMat, count(2)),
+    ];
+    const cores = [new THREE.InstancedMesh(shapes[0].core, leafMat, count(0)), new THREE.InstancedMesh(shapes[1].core, leafMat, count(1))];
+    const shade = new THREE.InstancedMesh(
+      new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ map: blobTexture(), color: "#000", transparent: true, opacity: 0.45, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
+      trees.length,
+    );
+    const slot = [0, 0, 0];
+    const sunOff = new THREE.Vector3(-0.45, 0, -0.35).normalize();
+    trees.forEach((t, i) => {
+      m.compose(new THREE.Vector3(t.x, 0, t.z), q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rand() * 6.3), new THREE.Vector3(t.s, t.s * (0.9 + rand() * 0.2), t.s));
       trunks.setMatrixAt(i, m);
-      crowns.setMatrixAt(i, m);
-      crowns.setColorAt(i, leaf.setHSL(0.27 + rand() * 0.06, 0.3 + rand() * 0.15, 0.2 + rand() * 0.08));
+      crowns[t.kind].setMatrixAt(slot[t.kind], m);
+      crowns[t.kind].setColorAt(slot[t.kind], t.tint!);
+      if (cores[t.kind]) { cores[t.kind].setMatrixAt(slot[t.kind], m); cores[t.kind].setColorAt(slot[t.kind], t.tint!); }
+      slot[t.kind]++;
+      const w = t.s * (t.kind === 0 ? 1.15 : 0.7);
+      m.compose(new THREE.Vector3(t.x + sunOff.x * t.s * 0.35, 0.015, t.z + sunOff.z * t.s * 0.35), q.identity(), new THREE.Vector3(w, 1, w));
+      shade.setMatrixAt(i, m);
     });
     q.identity();
-    this.scene.add(trunks, crowns);
+    crowns.forEach((c, k) => { c.count = slot[k]; });
+    cores.forEach((c, k) => { c.count = slot[k]; });
+    this.scene.add(trunks, shade, ...crowns, ...cores);
+
+    // Pedalos drifting on the Serpentine.
+    this.pedalos = new THREE.InstancedMesh(
+      mergeGeometries([tint(new THREE.BoxGeometry(0.2, 0.05, 0.12).translate(0, 0.03, 0), "#f4f1ea"), tint(new THREE.BoxGeometry(0.08, 0.06, 0.1).translate(-0.02, 0.08, 0), "#2f5d9a")])!,
+      new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6 }),
+      7,
+    );
+    this.pedalos.frustumCulled = false;
+    this.scene.add(this.pedalos);
 
     // --- Westminster: the Houses of Parliament along the river, Big Ben at the bridge end.
-    const landmarkMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75 });
-    const SAND = "#cfbd8f", LEAD = "#59606a", GILT = "#d4af37";
+    // Portland stone and Anston limestone glow a little even in shade.
+    const landmarkMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, emissive: "#3b352a", emissiveIntensity: 1 });
+    const SAND = "#dcc690", LEAD = "#55606c", GILT = "#e2b93b";
     const pw: THREE.BufferGeometry[] = [];
     const len = PARLIAMENT_X[1] - PARLIAMENT_X[0] - 0.9;
     pw.push(tint(new THREE.BoxGeometry(len, 1.0, 1.5).translate(0.45, 0.5, 0), SAND));
@@ -961,6 +1161,14 @@ export class Stage {
         pw.push(tint(new THREE.BoxGeometry(0.1, 0.55, 0.02).translate(x + 0.19, 0.5, z), "#6d6047")); // tall Gothic windows
       }
     }
+    // Battlements along both parapets, and slim octagonal turrets with gilded tips.
+    for (let x = -len / 2 + 0.5; x < len / 2 + 0.4; x += 0.16) for (const z of [-0.74, 0.74]) pw.push(tint(new THREE.BoxGeometry(0.08, 0.07, 0.05).translate(x, 1.035, z), "#e6d4a0"));
+    for (let x = -len / 2 + 0.9; x < len / 2; x += 1.15) for (const z of [-0.78, 0.78]) {
+      pw.push(tint(new THREE.CylinderGeometry(0.09, 0.1, 1.5, 8).translate(x, 0.75, z), "#e2cf98"));
+      pw.push(tint(new THREE.ConeGeometry(0.1, 0.42, 8).translate(x, 1.7, z), LEAD));
+      pw.push(tint(new THREE.ConeGeometry(0.025, 0.14, 6).translate(x, 1.96, z), GILT));
+    }
+    pw.push(tint(new THREE.BoxGeometry(len, 0.12, 0.5).translate(0.45, 0.06, -1.05), "#8f8a7c")); // river terrace
     pw.push(tint(new THREE.BoxGeometry(1.0, 3.4, 1.0).translate(len / 2 + 0.2, 1.7, 0), SAND)); // Victoria Tower
     for (const cx of [-0.45, 0.45]) for (const cz of [-0.45, 0.45]) pw.push(tint(new THREE.ConeGeometry(0.09, 0.6, 4).translate(len / 2 + 0.2 + cx, 3.7, cz), GILT));
     pw.push(tint(new THREE.CylinderGeometry(0.22, 0.26, 1.2, 8).translate(0.3, 1.6, 0), SAND)); // Central Tower
@@ -985,7 +1193,7 @@ export class Stage {
 
     // --- St Paul's Cathedral: cross-shaped nave, columned drum, lead dome, lantern and golden cross.
     const sp: THREE.BufferGeometry[] = [];
-    const PORT = "#d9d0bb";
+    const PORT = "#ece4cf";
     sp.push(tint(new THREE.BoxGeometry(5.2, 1.3, 1.5).translate(0, 0.65, 0), PORT));
     sp.push(tint(new THREE.BoxGeometry(1.6, 1.3, 3.6).translate(0.3, 0.65, 0), PORT));
     sp.push(tint(prism().rotateY(Math.PI / 2).scale(5.2, 0.6, 1.5).translate(0, 1.3, 0), LEAD));
@@ -1000,7 +1208,12 @@ export class Stage {
       const a = (i / 24) * Math.PI * 2;
       sp.push(tint(new THREE.CylinderGeometry(0.04, 0.04, 0.8, 6).translate(0.3 + Math.cos(a) * 1.07, 1.75, Math.sin(a) * 1.07), "#efe8d6"));
     }
-    sp.push(tint(new THREE.SphereGeometry(0.98, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 1.25, 1).translate(0.3, 2.2, 0), "#8a959b"));
+    sp.push(tint(new THREE.SphereGeometry(0.98, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 1.25, 1).translate(0.3, 2.2, 0), "#7d8b96"));
+    // Lead ribs down the dome, a balustrade at its foot, and the west portico's columns and pediment.
+    for (let i = 0; i < 16; i++) sp.push(tint(new THREE.TorusGeometry(0.985, 0.014, 4, 20, Math.PI / 2).scale(1, 1.25, 1).rotateY((i / 16) * Math.PI * 2).translate(0.3, 2.2, 0), "#a7b2ba"));
+    sp.push(tint(new THREE.CylinderGeometry(1.06, 1.06, 0.1, 32).translate(0.3, 2.25, 0), "#f4eedf"));
+    for (let i = 0; i < 6; i++) sp.push(tint(new THREE.CylinderGeometry(0.05, 0.055, 0.95, 8).translate(-2.78, 0.5, -0.5 + i * 0.2), "#f6f1e4"));
+    sp.push(tint(prism().rotateY(Math.PI / 2).scale(0.3, 0.35, 1.3).translate(-2.7, 1.0, 0), PORT));
     sp.push(tint(new THREE.CylinderGeometry(0.16, 0.2, 0.5, 12).translate(0.3, 3.6, 0), PORT)); // lantern
     sp.push(tint(new THREE.SphereGeometry(0.1, 12, 8).translate(0.3, 3.95, 0), GILT));
     sp.push(tint(new THREE.BoxGeometry(0.03, 0.3, 0.03).translate(0.3, 4.15, 0), GILT));
@@ -1307,20 +1520,50 @@ export class Stage {
     this.commute.visible = false;
     this.scene.add(this.commute);
 
-    // --- The enquiry leaving the house
-    const curve = new THREE.CubicBezierCurve3(
-      new THREE.Vector3(P.x, 2.1, P.z),
-      new THREE.Vector3(P.x, 9, P.z),
-      new THREE.Vector3(P.x + 10, 16, P.z - 10),
-      new THREE.Vector3(P.x + 26, 24, P.z - 34),
+    // --- The enquiry: an envelope flies from the home to the agent's branch, leaving a glowing trail.
+    // The branch is a real house a few streets east of the chosen home.
+    const branch = homes.reduce((a, b) => (Math.hypot(b.x - P.x - 8, b.z - P.z - 3) < Math.hypot(a.x - P.x - 8, a.z - P.z - 3) ? b : a));
+    this.branchPos = new THREE.Vector3(branch.x, branch.h, branch.z);
+    const B = this.branchPos;
+    const via = (f: number) => new THREE.Vector3(P.x + (B.x - P.x) * f, 8.5, P.z + (B.z - P.z) * f);
+    this.mailCurve = new THREE.CubicBezierCurve3(new THREE.Vector3(P.x, 2.3, P.z), via(0.12), via(0.88), new THREE.Vector3(B.x, B.y + 1, B.z));
+    this.mail = new THREE.Group();
+    const paper = new THREE.MeshStandardMaterial({ color: "#fff6c2", emissive: YELLOW, emissiveIntensity: 0.55, roughness: 0.6, side: THREE.DoubleSide });
+    this.mail.add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.03, 0.48), paper));
+    const flapGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.35, 0.019, -0.24), new THREE.Vector3(0.35, 0.019, -0.24), new THREE.Vector3(0, 0.019, 0.02)]);
+    flapGeo.computeVertexNormals();
+    this.mail.add(new THREE.Mesh(flapGeo, new THREE.MeshStandardMaterial({ color: "#ffd400", emissive: YELLOW, emissiveIntensity: 0.5, side: THREE.DoubleSide })));
+    this.mail.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 12), new THREE.MeshBasicMaterial({ color: YELLOW, transparent: true, opacity: 0.2, depthWrite: false, blending: THREE.AdditiveBlending })));
+    this.mail.scale.setScalar(1.5);
+    this.mail.visible = false;
+    this.scene.add(this.mail);
+    this.trail = new THREE.InstancedMesh(
+      new THREE.SphereGeometry(0.1, 8, 6),
+      new THREE.MeshBasicMaterial({ color: "#ffe55c", transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending }),
+      48,
     );
-    this.arc = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, 0.06, 6), new THREE.MeshBasicMaterial({ color: YELLOW }));
-    this.arc.geometry.setDrawRange(0, 0);
-    this.scene.add(this.arc);
-    this.arcHead = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), new THREE.MeshBasicMaterial({ color: "#fff6c2" }));
-    this.arcHead.visible = false;
-    this.arcHead.userData.curve = curve;
-    this.scene.add(this.arcHead);
+    this.trail.frustumCulled = false;
+    this.trail.visible = false;
+    this.scene.add(this.trail);
+    this.guide = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(this.mailCurve.getPoints(80)),
+      new THREE.LineDashedMaterial({ color: YELLOW, dashSize: 0.3, gapSize: 0.25, transparent: true, opacity: 0, depthWrite: false }),
+    );
+    this.guide.computeLineDistances();
+    this.scene.add(this.guide);
+    // The branch: a light column and a ring that pulses when the enquiry lands.
+    this.beacon = new THREE.Group();
+    this.beacon.position.set(B.x, 0, B.z);
+    this.beacon.add(new THREE.Mesh(
+      new THREE.CylinderGeometry(0.5, 0.9, 14, 24, 1, true).translate(0, 7, 0),
+      new THREE.MeshBasicMaterial({ color: YELLOW, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }),
+    ));
+    this.beacon.add(new THREE.Mesh(
+      new THREE.RingGeometry(1.5, 1.62, 64).rotateX(-Math.PI / 2).translate(0, 0.06, 0),
+      new THREE.MeshBasicMaterial({ color: YELLOW, transparent: true, opacity: 0, depthWrite: false }),
+    ));
+    this.beacon.visible = false;
+    this.scene.add(this.beacon);
 
     // --- London pin
     this.pin = new THREE.Group();
@@ -1379,6 +1622,18 @@ export class Stage {
       .slice(0, n);
   }
 
+  /** The chosen home plus two runners-up on different sides of it, for the ranked shortlist. */
+  shortlist() {
+    const f = this.focusPos;
+    const near = this.homes
+      .map((h) => ({ x: h.x, y: h.y, z: h.z, d: Math.hypot(h.x - f.x, h.z - f.z), a: Math.atan2(h.z - f.z, h.x - f.x) }))
+      .filter((h) => h.d > 3.5 && h.d < 9)
+      .sort((a, b) => a.d - b.d);
+    const first = near[0];
+    const second = near.find((h) => Math.abs(Math.atan2(Math.sin(h.a - first.a), Math.cos(h.a - first.a))) > 1.8) ?? near[1];
+    return [{ x: f.x, y: 2.6, z: f.z }, first, second];
+  }
+
   projectWorld(p: THREE.Vector3Like) {
     const v = new THREE.Vector3(p.x, p.y, p.z).project(this.camera);
     return { x: (v.x * 0.5 + 0.5) * window.innerWidth, y: (-v.y * 0.5 + 0.5) * window.innerHeight, behind: v.z > 1 };
@@ -1395,6 +1650,9 @@ export class Stage {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     const t = this.clock.getElapsed();
     this.shared.uTime.value = t;
+    const mq = new THREE.Quaternion();
+    const mp = new THREE.Vector3();
+    const mm = new THREE.Matrix4();
 
     // Ease toward the scroll-driven state so camera flights stay fluid.
     const k = reduced ? 1 : 1 - Math.exp(-dt * 2.8);
@@ -1449,11 +1707,33 @@ export class Stage {
     this.solidMats[0].color.copy(HOUSE_SOLID).lerp(YELLOW, c.focus);
     this.focusRing.material.opacity = c.focus * (1 - c.wire) * (0.6 + 0.4 * Math.sin(t * 3));
 
-    const arcCount = this.arc.geometry.index!.count;
-    this.arc.geometry.setDrawRange(0, Math.floor(arcCount * c.arc / 6) * 6);
-    this.arc.visible = c.arc > 0.005;
-    this.arcHead.visible = c.arc > 0.01 && c.arc < 0.995;
-    if (this.arcHead.visible) this.arcHead.position.copy((this.arcHead.userData.curve as THREE.Curve<THREE.Vector3>).getPoint(c.arc));
+    // The envelope: banks along its curve, towing a trail; the branch lights up as it lands.
+    const flying = c.arc > 0.004;
+    this.mail.visible = flying && c.arc < 0.995;
+    this.trail.visible = flying;
+    this.beacon.visible = flying;
+    this.guide.material.opacity = 0.4 * Math.min(c.arc * 4, 1) * (1 - Math.min(Math.max((c.arc - 0.88) / 0.12, 0), 1));
+    if (flying) {
+      const u = Math.min(c.arc, 1);
+      const pt = this.mailCurve.getPoint(u);
+      const tan = this.mailCurve.getTangent(u);
+      this.mail.position.copy(pt);
+      this.mail.lookAt(pt.x + tan.x, pt.y + tan.y, pt.z + tan.z);
+      this.mail.rotateZ(Math.sin(t * 5) * 0.12);
+      const tp = new THREE.Vector3();
+      for (let i = 0; i < 48; i++) {
+        this.mailCurve.getPoint(Math.max(u - i * 0.007, 0), tp);
+        const k = (1 - i / 48) * (u > 0.995 ? Math.max(1 - (c.arc - 0.995) * 200, 0) : 1);
+        this.trail.setMatrixAt(i, mm.compose(tp, mq.identity(), mp.set(k, k, k)));
+      }
+      this.trail.instanceMatrix.needsUpdate = true;
+      const land = Math.min(Math.max((c.arc - 0.93) / 0.07, 0), 1);
+      const [beam, ring] = this.beacon.children as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>[];
+      beam.material.opacity = Math.min(c.arc * 3, 1) * (0.08 + 0.12 * land + 0.03 * Math.sin(t * 3));
+      const ph = (t * 0.8) % 1;
+      ring.scale.setScalar(1 + land * ph * 2.2);
+      ring.material.opacity = Math.min(c.arc * 3, 1) * (0.5 * (1 - land * ph));
+    }
 
     this.pin.visible = c.pin > 0.01;
     this.pin.children.forEach((r) => {
@@ -1466,9 +1746,6 @@ export class Stage {
 
     // Traffic keeps moving; cars rise onto bridge decks over the river.
     const e = new THREE.Euler();
-    const mq = new THREE.Quaternion();
-    const mp = new THREE.Vector3();
-    const mm = new THREE.Matrix4();
     const one = new THREE.Vector3(1, 1, 1);
     this.cars.forEach((car) => {
       const dir = car.lane > 0 ? 1 : -1;
@@ -1498,6 +1775,13 @@ export class Stage {
       this.boatMesh.setMatrixAt(i, mm);
     });
     this.boatMesh.instanceMatrix.needsUpdate = true;
+    for (let i = 0; i < 7; i++) {
+      const a = t * (0.03 + i * 0.004) * (reduced ? 0 : 1) + i * 0.9;
+      mp.set(-23.5 + Math.cos(a) * (1.2 + (i % 3) * 0.6), 0.01, -15 + Math.sin(a * 1.3) * 0.32);
+      mm.compose(mp, mq.setFromEuler(e.set(0, -a + i, 0)), one);
+      this.pedalos.setMatrixAt(i, mm);
+    }
+    this.pedalos.instanceMatrix.needsUpdate = true;
 
     this.commute.visible = c.commute > 0.01;
     if (this.commute.visible) {
