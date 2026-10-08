@@ -1,8 +1,0 @@
-[     252ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1bjkg68unqmjx._.js:719
-[     302ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1bjkg68unqmjx._.js:719
-[     411ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1bjkg68unqmjx._.js:719
-[     439ms] [WARNING] THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1bjkg68unqmjx._.js:719
-[     499ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1bjkg68unqmjx._.js:719
-[     502ms] [WARNING] THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1bjkg68unqmjx._.js:719
-[   82727ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3456/_next/static/chunks/16a7-7acn82x2.js:0
-[   83091ms] [WARNING] THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed. @ http://localhost:3456/_next/static/chunks/16a7-7acn82x2.js:0
