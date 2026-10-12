@@ -159,7 +159,16 @@ export default function Experience() {
       state.cy += intro.v * 62;
       state.cx -= intro.v * 18;
       state.cz += intro.v * 6;
+      // After a sign-up the camera swoops down to the golden house, only while the form is on screen.
+      if (stage && claim.v > 0 && !reduced) {
+        const P = stage.pinPos;
+        const near = clamp(1 - (document.documentElement.scrollHeight - innerHeight - y) / innerHeight, 0, 1);
+        const m = claim.v * near;
+        const to = { cx: P.x + 15, cy: 11, cz: P.z + 27, tx: P.x, ty: 7.5, tz: P.z, orbit: 0 } as const;
+        (Object.keys(to) as (keyof typeof to)[]).forEach((k) => { state[k] += (to[k] - state[k]) * m; });
+      }
     };
+    const claim = { v: 0 };
     const intro = { v: reduced ? 0 : 1 };
     gsap.to(intro, { v: 0, duration: 3.4, ease: "power3.inOut", delay: 0.1 });
 
@@ -460,6 +469,18 @@ export default function Experience() {
       });
     }
 
+    // --- Sign-up landed (see JoinForm): the golden house rises over London, the camera dives in, then eases back out.
+    const onClaim = () => {
+      root.classList.add("claimed");
+      if (!stage) return;
+      stage.burst();
+      if (reduced) return;
+      gsap.timeline()
+        .to(claim, { v: 1, duration: 1.8, ease: "power3.inOut" })
+        .to(claim, { v: 0, duration: 3.2, ease: "sine.inOut" }, "+=4.5");
+    };
+    addEventListener("founding:claimed", onClaim);
+
     // --- Try it: read the visitor's words, then sweep the city for them.
     const form = document.getElementById("try-form") as HTMLFormElement;
     const input = document.getElementById("try-input") as HTMLTextAreaElement;
@@ -501,6 +522,7 @@ export default function Experience() {
     return () => {
       form.removeEventListener("submit", onTry);
       suggest.removeEventListener("click", onSuggest);
+      removeEventListener("founding:claimed", onClaim);
       removeEventListener("pointerdown", onDown);
       removeEventListener("pointermove", onMove);
       removeEventListener("pointerup", onUp);

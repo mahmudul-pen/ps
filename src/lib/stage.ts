@@ -815,6 +815,16 @@ export class Stage {
   private beacon: THREE.Group;
   readonly branchPos: THREE.Vector3;
   private pin: THREE.Group;
+  // The claim moment: a golden house rises from the London pin in a burst of sparks.
+  private claim!: THREE.Group;
+  private claimHouse!: THREE.Mesh;
+  private claimBeam!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+  private claimCore!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+  private claimRings: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>[] = [];
+  private sparks!: THREE.InstancedMesh;
+  private sparkData: { p: THREE.Vector3; v: THREE.Vector3; life: number; size: number }[] = [];
+  private burstAt = -1;
+  readonly pinPos = new THREE.Vector3(0, 0, riverZ(0));
   private cars: Car[] = [];
   private fleet: THREE.InstancedMesh[][] = [];
   private boats: { x: number; dir: number; off: number; speed: number }[] = [];
@@ -1579,6 +1589,46 @@ export class Stage {
     this.pin.position.set(0, 0.05, riverZ(0));
     this.scene.add(this.pin);
 
+    // --- Claim burst: house, light column, shockwaves, sparks. Hidden until burst().
+    const GLOW = new THREE.Color(YELLOW).multiplyScalar(2.2); // above the bloom threshold so it glows
+    this.claim = new THREE.Group();
+    this.claim.position.copy(this.pinPos);
+    this.claim.visible = false;
+    const outline = new THREE.Shape();
+    outline.moveTo(-1, 0); outline.lineTo(1, 0); outline.lineTo(1, 1.15); outline.lineTo(0, 2); outline.lineTo(-1, 1.15); outline.closePath();
+    const doorHole = new THREE.Path();
+    doorHole.moveTo(-0.28, 0); doorHole.lineTo(0.28, 0); doorHole.lineTo(0.28, 0.8); doorHole.lineTo(-0.28, 0.8); doorHole.closePath();
+    outline.holes.push(doorHole);
+    const houseGeo = new THREE.ExtrudeGeometry(outline, { depth: 0.9, bevelEnabled: true, bevelSize: 0.06, bevelThickness: 0.06, bevelSegments: 2 }).translate(0, -1, -0.45);
+    this.claimHouse = new THREE.Mesh(houseGeo, new THREE.MeshBasicMaterial({ color: GLOW, transparent: true, opacity: 1 }));
+    this.claimHouse.add(new THREE.LineSegments(new THREE.EdgesGeometry(houseGeo, 30), new THREE.LineBasicMaterial({ color: 0xffffff })));
+    this.claim.add(this.claimHouse);
+    const column = (r: number, color: THREE.Color) => {
+      const m = new THREE.Mesh(
+        new THREE.CylinderGeometry(r, r, 90, 24, 1, true).translate(0, 45, 0),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }),
+      );
+      this.claim.add(m);
+      return m;
+    };
+    this.claimBeam = column(1.6, YELLOW);
+    this.claimCore = column(0.35, GLOW);
+    for (let i = 0; i < 3; i++) {
+      const r = new THREE.Mesh(
+        new THREE.RingGeometry(1, 1.08, 96).rotateX(-Math.PI / 2).translate(0, 0.08, 0),
+        new THREE.MeshBasicMaterial({ color: GLOW, transparent: true, opacity: 0, depthWrite: false }),
+      );
+      this.claim.add(r);
+      this.claimRings.push(r);
+    }
+    const nSparks = opts.lite ? 90 : 240;
+    this.sparks = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.16), new THREE.MeshBasicMaterial({ color: GLOW }), nSparks);
+    this.sparks.frustumCulled = false;
+    this.sparks.count = 0;
+    for (let i = 0; i < nSparks; i++) this.sparkData.push({ p: new THREE.Vector3(), v: new THREE.Vector3(), life: 0, size: 1 });
+    this.claim.add(this.sparks);
+    this.scene.add(this.claim);
+
     if (!opts.lite) {
       this.composer = new EffectComposer(this.renderer);
       this.composer.addPass(new RenderPass(this.scene, this.camera));
@@ -1593,6 +1643,64 @@ export class Stage {
   matches(query: number, narrow = 0) {
     const thr = 0.055 + (0.012 - 0.055) * narrow;
     return this.randsByQuery[query].filter((r) => r <= thr).length;
+  }
+
+  /** The sign-up landed: raise the golden house over London. */
+  burst() {
+    this.burstAt = this.clock.getElapsed();
+    this.claim.visible = true;
+    this.sparkData.forEach((d) => {
+      const a = Math.random() * Math.PI * 2;
+      const out = 2 + Math.random() * 9;
+      d.p.set(0, 5.5, 0);
+      d.v.set(Math.cos(a) * out, 7 + Math.random() * 15, Math.sin(a) * out);
+      d.life = 1.6 + Math.random() * 2.2;
+      d.size = 0.5 + Math.random() * 1.1;
+    });
+    this.sparks.count = this.sparkData.length;
+  }
+
+  private updateClaim(t: number, dt: number) {
+    if (this.burstAt < 0) return;
+    const age = t - this.burstAt;
+    const out = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
+    const back = (x: number) => { const c = 1.9, y = Math.min(Math.max(x, 0), 1) - 1; return 1 + (c + 1) * y * y * y + c * y * y; };
+    // The house pops up on a spring, then hovers and turns for as long as the page is open.
+    const rise = back(age / 1.3);
+    this.claimHouse.scale.setScalar(Math.max(rise, 0.001) * 3.1);
+    this.claimHouse.position.y = 1.5 + out(age / 1.3) * 5 + Math.sin(t * 1.6) * 0.25;
+    this.claimHouse.rotation.y = age * 1.1 + (1 - out(age / 1.6)) * Math.PI * 4;
+    // A column of light shoots up, then settles to a steady glow.
+    const grow = out(age / 0.7);
+    const calm = 0.1 + 0.03 * Math.sin(t * 3);
+    const flare = Math.max(1 - age / 1.6, 0);
+    this.claimBeam.scale.set(1, grow, 1);
+    this.claimBeam.material.opacity = grow * (calm + 0.3 * flare);
+    this.claimCore.scale.set(1, grow, 1);
+    this.claimCore.material.opacity = grow * (0.35 + 0.4 * flare);
+    // Shockwaves roll out along the streets, then one slow ring keeps pulsing.
+    this.claimRings.forEach((r, i) => {
+      const a = age - i * 0.28;
+      const idle = i === 0 && age > 2.4 ? ((t * 0.4) % 1) : -1;
+      const u = a > 0 && a < 2.2 ? a / 2.2 : idle;
+      r.visible = u >= 0;
+      if (u < 0) return;
+      r.scale.setScalar(1 + out(u) * (i === 0 && idle >= 0 ? 16 : 70));
+      r.material.opacity = (1 - u) * 0.9;
+    });
+    // Sparks arc out under gravity and dim as they fall.
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
+    let live = 0;
+    this.sparkData.forEach((d) => {
+      d.life -= dt;
+      if (d.life <= 0) return;
+      d.v.y -= 15 * dt;
+      d.p.addScaledVector(d.v, dt);
+      const k = Math.min(d.life, 1) * d.size;
+      this.sparks.setMatrixAt(live++, m.compose(d.p, q, sc.set(k, k, k)));
+    });
+    this.sparks.count = live;
+    this.sparks.instanceMatrix.needsUpdate = true;
   }
 
   setQuery(q: number) { this.shared.uQuery.value = q; }
@@ -1743,6 +1851,8 @@ export class Stage {
       r.scale.setScalar(1 + p * 22);
       mat.opacity = c.pin * (1 - p) * 0.8;
     });
+
+    this.updateClaim(t, dt);
 
     // Traffic keeps moving; cars rise onto bridge decks over the river.
     const e = new THREE.Euler();

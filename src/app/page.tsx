@@ -515,9 +515,13 @@ export default function Home() {
 
         <section id="join" className="launch">
           <div className="launch-copy">
-            <h2>Claim your<br />founding place.</h2>
-            <p>
-              London first. Be one of the first 100, tell us what you&rsquo;re after once, and we&rsquo;ll take it from there.
+            <h2 className="swap">
+              <span className="pre">Claim your<br />founding place.</span>
+              <span className="post" aria-hidden="true">You&rsquo;re in.<br /><span className="voice">Welcome to the 100.</span></span>
+            </h2>
+            <p className="swap">
+              <span className="pre">London first. Be one of the first 100, tell us what you&rsquo;re after once, and we&rsquo;ll take it from there.</span>
+              <span className="post" aria-hidden="true">Look up: your place just landed in London. We&rsquo;ll be in touch when something genuinely matches.</span>
             </p>
           </div>
           <JoinForm />

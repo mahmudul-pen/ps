@@ -491,9 +491,38 @@ html.js .street-card.on .conf::after { width: var(--v); }
 .roles input:focus-visible + span { outline: 2px solid var(--yellow); outline-offset: 2px; }
 .form-note { margin: 0; font-size: 13px; color: var(--muted); }
 .form-error { margin: 0; color: #ff9d88; font-size: 14px; }
-.form.done { align-content: center; min-height: 260px; }
-.done-title { margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -0.03em; color: var(--yellow); }
-.form.done p:last-child { margin: 0; color: var(--muted); }
+
+/* The sign-up card is a real 3D object: it follows the pointer and flips over into a golden ticket. */
+.flip { perspective: 1400px; }
+.tilt { transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.25s var(--ease-out); transform-style: preserve-3d; }
+.flip-inner { position: relative; transform-style: preserve-3d; transition: transform 1.5s cubic-bezier(0.2, 1.1, 0.25, 1); }
+.flip[data-done] .flip-inner { transform: rotateY(180deg) translateZ(30px); }
+.face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.ticket {
+  position: absolute; inset: 0; transform: rotateY(180deg);
+  display: flex; flex-direction: column; justify-content: center; gap: 0; padding: 32px 30px; overflow: hidden;
+  background: var(--yellow); color: var(--on-yellow); border-radius: 6px;
+  box-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.95), 0 0 80px -10px rgb(255 212 0 / 0.55);
+  -webkit-mask: radial-gradient(circle 11px at 0 66%, transparent 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 11px at 100% 66%, transparent 98%, #000) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle 11px at 0 66%, transparent 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 11px at 100% 66%, transparent 98%, #000) right / 51% 100% no-repeat;
+}
+.ticket p { margin: 0; }
+.ticket-mark { width: 40px; height: 40px; margin-bottom: 18px; }
+.ticket-kicker { font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-yellow-2); }
+.ticket-title { font-size: clamp(3rem, 5vw, 4.2rem); line-height: 0.95; font-weight: 600; letter-spacing: -0.045em; margin: 6px 0 14px !important; }
+.ticket-line { font-size: 18px; max-width: 26ch; color: var(--on-yellow-2); }
+.ticket-tear { margin: 26px -30px 18px; border-top: 2px dashed rgb(20 17 0 / 0.45); }
+.ticket-fine { font-size: 14px; color: var(--on-yellow-2); }
+.sheen { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent calc(var(--mx, 30%) - 18%), rgb(255 255 255 / 0.45) var(--mx, 30%), transparent calc(var(--mx, 30%) + 18%)); mix-blend-mode: soft-light; }
+.reduced .flip-inner, .reduced .tilt { transition: none; }
+
+/* Launch copy changes with the claim. */
+.swap { display: grid; }
+.swap > span { grid-area: 1 / 1; transition: opacity 0.6s, transform 1s var(--ease-out); }
+.swap .post { opacity: 0; transform: translateY(24px); pointer-events: none; }
+.swap .post .voice { color: var(--yellow); }
+.claimed .swap .pre { opacity: 0; transform: translateY(-24px); }
+.claimed .swap .post { opacity: 1; transform: none; transition-delay: 0.5s; }
 
 .foot {
   display: grid; grid-template-columns: 1fr auto; gap: 16px 40px; align-items: start;
