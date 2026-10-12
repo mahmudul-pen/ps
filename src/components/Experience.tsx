@@ -8,7 +8,7 @@ import { Stage, type SceneState } from "@/lib/stage";
 import { readWords } from "@/lib/read-words";
 
 const QUERIES = [
-  { text: "A quiet street, three beds, somewhere the kids can walk to a good primary. Under £650k.", chips: ["3 bed", "Low-traffic street", "Primary ≤ 10 min walk", "≤ £650k"] },
+  { text: "3 bedrooms, a garden, under £450k, 40 min to King\u2019s Cross, near an Outstanding school.", chips: ["3 beds", "Garden", "Under £450k", "≤ 40 min to King\u2019s Cross", "Outstanding school"] },
   { text: "A flat with morning light and a balcony. Thirty minutes door to door to Liverpool Street.", chips: ["1–2 bed flat", "East-facing", "Balcony", "≤ 30 min to Liverpool St"] },
   { text: "We're moving down from Manchester. Leafy, near a park, room for a home office.", chips: ["2–3 bed", "Park ≤ 5 min", "Study or box room", "Low density"] },
 ];
@@ -27,6 +27,7 @@ function keyframes(P: { x: number; z: number }, B: { x: number; z: number }, nar
   const top: SceneState = { ...BASE, cx: 0.1, cy: 64, cz: 6, tx: 0, ty: 8, tz: 0, orbit: 0, scan: 0, dim: 0.85, cloud: 1 };
   const describe: SceneState = { ...BASE, cx: P.x + 18, cy: 15, cz: P.z + 24, tx: P.x - 2, ty: 0, tz: P.z - 3, orbit: 0.4 };
   const refine: SceneState = { ...describe, cx: P.x + 13, cy: 12, cz: P.z + 17, tx: P.x - 1.5, tz: P.z + 1.5, narrow: 1, orbit: 0.2 };
+  const watch: SceneState = { ...refine, cx: P.x + 24, cy: 21, cz: P.z + 30, tx: P.x - 3, ty: 0, tz: P.z - 2, narrow: 0.5, orbit: 0.5 };
   const decide: SceneState = { ...refine, cx: P.x + 9, cy: 9, cz: P.z + 12, tx: P.x - 1.6, ty: 0.6, tz: P.z + 1.6, focus: 1, dim: 1, orbit: 0, scan: 0.4 };
   // Send: a side-on view of the flight from the home to the branch, framed right of the copy.
   const mx = (P.x + B.x) / 2, mz = (P.z + B.z) / 2;
@@ -60,44 +61,45 @@ function keyframes(P: { x: number; z: number }, B: { x: number; z: number }, nar
   return [
     { id: "top", at: 0, s: hero },
     { id: "top", at: 0.35, s: hero },
-    { id: "problem", at: 0, s: top },
-    { id: "problem", at: 0.25, s: top },
-    { id: "problem", at: 0.78, s: { ...top, morph: 1 } },
-    { id: "problem", at: 1, s: { ...top, morph: 1, cloud: 0.3 } },
-    { id: "compare", at: 0, s: { ...top, morph: 1, cloud: 0, dim: 0.95 } },
-    { id: "compare", at: 1, s: { ...top, morph: 1, cloud: 0, dim: 0.95 } },
-    { id: "how", at: 0.1, s: describe },
-    { id: "how", at: 0.22, s: describe },
-    { id: "how", at: 0.36, s: refine },
-    { id: "how", at: 0.47, s: refine },
-    { id: "how", at: 0.6, s: decide },
-    { id: "how", at: 0.72, s: decide },
+    { id: "scan", at: 0, s: top },
+    { id: "scan", at: 0.25, s: top },
+    { id: "scan", at: 0.78, s: { ...top, morph: 1 } },
+    { id: "scan", at: 1, s: { ...top, morph: 1, cloud: 0.3 } },
+    { id: "results", at: 0, s: { ...top, morph: 1, cloud: 0, dim: 0.95 } },
+    { id: "results", at: 1, s: { ...top, morph: 1, cloud: 0, dim: 0.95 } },
+    // Ways to live: parks by the river, the school walk, a quiet high street, then the door-to-desk reach.
+    { id: "live", at: 0, s: westminster },
+    { id: "live", at: 0.1, s: westminster },
+    { id: "live", at: 0.2, s: hydePark },
+    { id: "live", at: 0.24, s: hydePark },
+    { id: "live", at: 0.3, s: schoolA },
+    { id: "live", at: 0.48, s: schoolB },
+    { id: "live", at: 0.54, s: quietA },
+    { id: "live", at: 0.72, s: quietB },
+    { id: "live", at: 0.78, s: theCity },
+    { id: "live", at: 0.86, s: commuteA },
+    { id: "live", at: 0.95, s: commuteB },
+    { id: "live", at: 1, s: commuteB },
+    { id: "areas", at: 0, s: driveA },
+    { id: "areas", at: 1, s: driveB },
+    { id: "how", at: 0.08, s: describe },
+    { id: "how", at: 0.17, s: describe },
+    { id: "how", at: 0.26, s: refine },
+    { id: "how", at: 0.34, s: refine },
+    { id: "how", at: 0.43, s: watch },
+    { id: "how", at: 0.52, s: watch },
+    { id: "how", at: 0.62, s: decide },
+    { id: "how", at: 0.7, s: decide },
     { id: "how", at: 0.82, s: sendA },
     { id: "how", at: 0.97, s: send },
     { id: "how", at: 1, s: send },
-    { id: "commute", at: 0, s: commuteA },
-    { id: "commute", at: 0.15, s: commuteA },
-    { id: "commute", at: 0.6, s: commuteB },
-    { id: "commute", at: 1, s: commuteB },
-    { id: "schools", at: 0, s: schoolA },
-    { id: "schools", at: 1, s: schoolB },
-    { id: "quiet", at: 0, s: quietA },
-    { id: "quiet", at: 1, s: quietB },
-    { id: "truth", at: 0, s: known },
-    { id: "truth", at: 0.3, s: examined },
-    { id: "truth", at: 1, s: examinedEnd },
-    { id: "streets", at: 0, s: driveA },
-    { id: "streets", at: 1, s: driveB },
-    { id: "around", at: 0, s: westminster },
-    { id: "around", at: 0.26, s: westminster },
-    { id: "around", at: 0.42, s: theCity },
-    { id: "around", at: 0.6, s: theCity },
-    { id: "around", at: 0.76, s: hydePark },
-    { id: "around", at: 1, s: hydePark },
+    { id: "rank", at: 0, s: known },
+    { id: "rank", at: 0.3, s: examined },
+    { id: "rank", at: 1, s: examinedEnd },
     { id: "try", at: 0, s: tryIt },
     { id: "try", at: 1, s: tryIt },
     { id: "faq", at: 0, s: faq },
-    { id: "demo", at: 0, s: city },
+    { id: "join", at: 0, s: city },
   ];
 }
 
@@ -140,7 +142,7 @@ export default function Experience() {
       anchors = keys.map((k) => {
         const el = document.getElementById(k.id)!;
         const top = el.getBoundingClientRect().top + scrollY;
-        return top + k.at * Math.max(el.offsetHeight - vh, 0) - (k.id === "demo" ? vh * 0.6 : 0);
+        return top + k.at * Math.max(el.offsetHeight - vh, 0) - (k.id === "join" ? vh * 0.6 : 0);
       });
     };
     const state = { ...BASE };
@@ -162,7 +164,7 @@ export default function Experience() {
     gsap.to(intro, { v: 0, duration: 3.4, ease: "power3.inOut", delay: 0.1 });
 
     // --- Drag to look around (mouse only; touch keeps native scrolling).
-    const NO_DRAG = "a,button,input,textarea,select,label,summary,details,form,figure,h1,h2,h3,p,li,.ui,.dock,.feeling,.people,.faq,.foot";
+    const NO_DRAG = "a,button,input,textarea,select,label,summary,details,form,figure,h1,h2,h3,p,li,.ui,.dock,.feeling,.founding,.faq,.foot";
     let yaw = 0, pitch = 0, vy = 0, vp = 0, dragging = false, lx = 0, ly = 0, mx = 0, my = 0;
     const onDown = (e: PointerEvent) => {
       if (e.pointerType !== "mouse" || e.button !== 0 || (e.target as Element).closest(NO_DRAG)) return;
@@ -191,8 +193,8 @@ export default function Experience() {
       spots = stage.spots(qi, spotEls.length);
       spots.forEach((p, i) => {
         const h = Math.abs(Math.sin(p.x * 12.9 + p.z * 78.2) * 43758) % 1;
-        const price = Math.round((qi === 1 ? 380 + h * 220 : 520 + h * 260) / 5) * 5;
-        const beds = qi === 1 ? `${1 + Math.floor(h * 2)} bed flat` : `${2 + Math.floor(h * 2)} bed`;
+        const price = Math.round((qi === 0 ? 340 + h * 105 : qi === 1 ? 380 + h * 220 : 520 + h * 260) / 5) * 5;
+        const beds = qi === 0 ? "3 bed" : qi === 1 ? `${1 + Math.floor(h * 2)} bed flat` : `${2 + Math.floor(h * 2)} bed`;
         spotEls[i].querySelector(".spot-label")!.innerHTML = `<b>£${price}k</b><span>${beds} · ${88 + Math.floor(h * 11)}% fit</span>`;
       });
     };
@@ -285,12 +287,13 @@ export default function Experience() {
       // Feelings drift in loose, then get forced into filter rows.
       const feelings = gsap.utils.toArray<HTMLElement>(".feeling");
       // Each loose quote gets its own row, shuffled, so none overlap before they snap into place.
-      const rows = [2, 0, 4, 1, 5, 3];
-      const xs = narrow ? [0, 0, 0, 0, 0, 0] : [26, -6, 34, 2, 22, 10];
-      const rot = [-6, 5, 4, -7, -3, 6];
-      const tl = gsap.timeline({ scrollTrigger: { trigger: "#problem", start: "top top", end: "bottom bottom", scrub: reduced ? true : 0.6 } });
+      const rows = [2, 0, 3, 1];
+      const xs = narrow ? [0, 0, 0, 0] : [26, -6, 34, 2];
+      const rot = [-6, 5, 4, -7];
+      const tl = gsap.timeline({ scrollTrigger: { trigger: "#scan", start: "top top", end: "bottom bottom", scrub: reduced ? true : 0.6 } });
       const keepN = document.getElementById("keep-n")!;
-      const convertAt = (i: number) => 1.15 + i * 0.1;
+      const counts = feelings.map((el) => el.querySelector(".filt b")!.textContent ?? "");
+      const convertAt = (i: number) => 1.1 + i * 0.22;
       feelings.forEach((el, i) => {
         tl.fromTo(el, { xPercent: xs[i], yPercent: (rows[i] - i) * 118, rotation: narrow ? rot[i] / 2 : rot[i], scale: 1.04 }, { xPercent: 0, yPercent: 0, rotation: 0, scale: 1, ease: "power3.inOut", duration: 1 }, 0.2 + i * 0.04);
         // A scan line crosses the row, eating the feeling and leaving a filter behind it.
@@ -302,11 +305,12 @@ export default function Experience() {
         if (!reduced) gsap.to(el.querySelector(".feel"), { y: 7, duration: 2.2 + i * 0.3, ease: "sine.inOut", yoyo: true, repeat: -1, delay: i * 0.2 });
       });
       tl.eventCallback("onUpdate", () => {
-        keepN.textContent = String(feelings.filter((_, i) => tl.time() < convertAt(i) + 0.25).length);
+        // The count shows what is left of London after the latest clause has swept through.
+        const done = feelings.filter((_, i) => tl.time() >= convertAt(i) + 0.25).length;
+        keepN.textContent = counts[Math.max(done - 1, 0)];
       });
-      tl.fromTo(".problem-title .voice", { autoAlpha: 1 }, { autoAlpha: 0.28, duration: 0.6 }, 1.1);
       tl.fromTo(".keep", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, 0.5);
-      tl.fromTo(".problem-coda", { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.5 }, 1.95);
+      tl.fromTo(".problem-coda", { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.5 }, 2.1);
       tl.to({}, { duration: 0.35 });
 
       // A step's card performs when it comes into focus: words type out, replies and rows arrive after.
@@ -340,16 +344,16 @@ export default function Experience() {
       // onRefresh too, so a reload that restores the scroll mid-section shows the right step.
       const setStep = (self: ScrollTrigger) => {
         const p = self.progress;
-        const active = String(p < 0.3 ? 1 : p < 0.54 ? 2 : p < 0.79 ? 3 : 4);
+        const active = String(p < 0.21 ? 1 : p < 0.38 ? 2 : p < 0.56 ? 3 : p < 0.76 ? 4 : 5);
         stepEls.forEach((el) => activate(el, el.dataset.step === active));
       };
       ScrollTrigger.create({ trigger: "#how", start: "top top", end: "bottom bottom", onUpdate: setStep, onRefresh: setStep });
-      const stopEls = document.querySelectorAll<HTMLElement>("#around [data-stop]");
+      const stopEls = document.querySelectorAll<HTMLElement>("#live [data-stop]");
       const setStop = (self: ScrollTrigger) => {
-        const active = String(self.progress < 0.34 ? 1 : self.progress < 0.68 ? 2 : 3);
+        const active = String(self.progress < 0.27 ? 1 : self.progress < 0.51 ? 2 : self.progress < 0.76 ? 3 : 4);
         stopEls.forEach((el) => activate(el, el.dataset.stop === active));
       };
-      ScrollTrigger.create({ trigger: "#around", start: "top top", end: "bottom bottom", onUpdate: setStop, onRefresh: setStop });
+      ScrollTrigger.create({ trigger: "#live", start: "top top", end: "bottom bottom", onUpdate: setStop, onRefresh: setStop });
 
       const track = document.querySelector<HTMLElement>(".street-track");
       if (track) {
@@ -357,7 +361,7 @@ export default function Experience() {
         const drive = gsap.fromTo(track, { x: () => innerWidth }, {
           x: () => -(track.scrollWidth - innerWidth),
           ease: "none",
-          scrollTrigger: { trigger: "#streets", start: "top top", end: "bottom bottom", scrub: reduced ? true : 0.5, invalidateOnRefresh: true },
+          scrollTrigger: { trigger: "#areas", start: "top top", end: "bottom bottom", scrub: reduced ? true : 0.5, invalidateOnRefresh: true },
         });
         // Each card swings round to face you as it passes, and builds its street while it's in view.
         gsap.utils.toArray<HTMLElement>(".street-card").forEach((card) => {
@@ -370,15 +374,9 @@ export default function Experience() {
           ScrollTrigger.create({ trigger: card, containerAnimation: drive, start: "left 82%", end: "right -10%", toggleClass: { targets: card, className: "on" } });
         });
       }
-      gsap.utils.toArray<HTMLElement>(".commute").forEach((sec) => {
-        gsap.from(sec.querySelectorAll(".commute-copy > *"), {
-          autoAlpha: 0, y: 30, stagger: 0.09, duration: 1.1, ease: "expo.out",
-          scrollTrigger: { trigger: sec, start: "top 40%" },
-        });
-      });
-      gsap.from(".filter-wall li", {
-        autoAlpha: 0, y: 14, stagger: 0.045, duration: 0.7, ease: "expo.out",
-        scrollTrigger: { trigger: ".compare", start: "top 65%" },
+      gsap.from(".results > li", {
+        autoAlpha: 0, y: 24, stagger: 0.12, duration: 1, ease: "expo.out",
+        scrollTrigger: { trigger: ".compare", start: "top 55%" },
       });
       gsap.from(".compare h2, .side.ours > *", {
         autoAlpha: 0, y: 30, stagger: 0.09, duration: 1.1, ease: "expo.out",
@@ -396,12 +394,13 @@ export default function Experience() {
         autoAlpha: 0, y: 40, stagger: 0.1, ease: "expo.out", duration: 1.2,
         scrollTrigger: { trigger: "#truth", start: "top 40%" },
       });
-      gsap.utils.toArray<HTMLElement>(".persona-list li").forEach((li) => {
-        gsap.from(li, { clipPath: "inset(0 0 100% 0)", y: 30, duration: 1.3, ease: "expo.out", scrollTrigger: { trigger: li, start: "top 85%" } });
-      });
+      // Founding slots light up one by one; the benefits rise out of their rules.
+      gsap.from(".founding-head > *", { autoAlpha: 0, y: 30, stagger: 0.1, duration: 1.2, ease: "expo.out", scrollTrigger: { trigger: ".founding", start: "top 70%" } });
+      gsap.from(".slots li.taken", { autoAlpha: 0.15, scale: 0.6, duration: 0.5, ease: "back.out(2)", stagger: 0.02, scrollTrigger: { trigger: ".slots", start: "top 80%" } });
+      gsap.from(".benefits li", { clipPath: "inset(0 0 100% 0)", y: 30, stagger: 0.1, duration: 1.3, ease: "expo.out", scrollTrigger: { trigger: ".benefits", start: "top 85%" } });
       gsap.from(".launch-copy h2, .launch-copy p, .form", {
         autoAlpha: 0, y: 40, stagger: 0.1, duration: 1.2, ease: "expo.out",
-        scrollTrigger: { trigger: "#demo", start: "top 60%" },
+        scrollTrigger: { trigger: "#join", start: "top 60%" },
       });
     });
 

@@ -1,5 +1,5 @@
 import Experience from "@/components/Experience";
-import DemoForm from "@/components/DemoForm";
+import JoinForm from "@/components/JoinForm";
 
 function Mark() {
   return (
@@ -25,15 +25,6 @@ function Guessed() {
   return <svg className="tick" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeDasharray="2 1.6" /></svg>;
 }
 
-const FEELINGS = [
-  ["somewhere with morning light", "Orientation", "Any"],
-  ["a street that feels safe at night", "Radius", "1 mile"],
-  ["quiet, but not dead", "Property type", "Any"],
-  ["close enough to walk the kids to school", "Bedrooms", "3+"],
-  ["a kitchen we'd actually cook in", "Keywords", "kitchen"],
-  ["room for a desk that isn't the bed", "Max price", "£650,000"],
-];
-
 function DragIcon() {
   return (
     <svg className="drag-icon" viewBox="0 0 20 20" aria-hidden="true">
@@ -44,31 +35,98 @@ function DragIcon() {
 }
 
 const CHAPTERS = [
-  ["top", "The scan"], ["problem", "The problem"], ["compare", "One sentence"], ["how", "How it works"],
-  ["commute", "Commute"], ["schools", "Schools"], ["quiet", "Quiet streets"], ["truth", "Facts and guesses"], ["streets", "Street readings"], ["around", "Around London"], ["try", "Try it"], ["people", "Who it's for"], ["faq", "Questions"], ["demo", "Book a demo"],
+  ["top", "Say it once"], ["scan", "How it finds"], ["results", "Sample matches"], ["live", "Ways to live"], ["areas", "Featured areas"],
+  ["how", "How it works"], ["rank", "How it ranks"], ["try", "Try it"], ["founding", "Founding 100"], ["faq", "Questions"], ["join", "Claim your place"],
 ];
 
-const PORTAL = [
-  ["Location", "London"], ["Radius", "+1 mile"], ["Min price", "No min"], ["Max price", "£650,000"],
-  ["Min beds", "3"], ["Max beds", "No max"], ["Property type", "Houses"], ["Added to site", "Anytime"],
-  ["Include under offer", "No"], ["Must haves", "Garden"], ["Don't show", "Retirement homes"], ["Keywords", "quiet?"],
+const NAV = [["scan", "How it finds"], ["live", "Ways to live"], ["how", "How it works"], ["rank", "How it ranks"], ["contact", "Contact Us"]];
+
+// Each row of the funnel is one more clause of the brief; the count is what's left of London.
+const FUNNEL = [
+  ["every listing in London", "All London listings", "4,812"],
+  ["three bedrooms and a garden", "+ 3+ bed with garden", "1,126"],
+  ["under £450k", "+ Under £450,000", "214"],
+  ["near an Outstanding school", "+ Near Outstanding school", "3"],
 ];
 
-// Made-up streets: these readings only show the format, never real data about a real place.
+const BRIEF = "3 bedrooms, a garden, under £450k, 40 min to King’s Cross, near an Outstanding school.";
+
+// Illustrative results: the format of a match, not real listings.
+const RESULTS: { street: string; fit: number; label?: string; meta: string; confirmed: string[]; unsure: string[] }[] = [
+  { street: "Hemingford Road, Islington N1", fit: 97, label: "Best match", meta: "£449,950 · 3 bed · 1,120 sq ft", confirmed: ["South-facing garden", "9 min walk to an Outstanding primary", "38 min to King’s Cross"], unsure: ["Kitchen needs updating"] },
+  { street: "Albion Road, Stoke Newington N16", fit: 95, meta: "14 min to King’s Cross · 2 Outstanding schools", confirmed: ["Garden"], unsure: ["Loft included?"] },
+  { street: "Mapledene Road, Hackney E8", fit: 90, meta: "Illustrative match", confirmed: ["6 min to an Outstanding primary"], unsure: ["Garden orientation"] },
+];
+
+const RANKED = [
+  ["Hemingford Road, Islington N1", "97%", "Best match"],
+  ["Albion Road, Stoke Newington N16", "95%", "Strong match"],
+  ["Mapledene Road, Hackney E8", "90%", "Good match"],
+  ["Riverside Tower, E14", "41%", "Promoted listing, lower relevance"],
+];
+
 type Roof = "gable" | "flat" | "block" | "mews";
-const STREETS: { name: string; type: string; roof: Roof; accent: string; sky: [string, string]; facades: string[]; readings: [string, string, boolean, number?][] }[] = [
-  { name: "Ashby Road", type: "Victorian terraces", roof: "gable", accent: "#e0714f", sky: ["#f4a46a", "#fbd9a8"], facades: ["#8a4636", "#9b5a42", "#8a4636", "#b9a88a", "#9b5a42", "#6e3b30"],
-    readings: [["Mostly 3-bed terraces", "from listings", false], ["Quiet after 8pm", "traffic data", true, 70], ["Park, 4 min walk", "map data", true, 90], ["Freehold", "from the listing", false]] },
-  { name: "Linden Grove", type: "Pastel terraces", roof: "gable", accent: "#ef8fa6", sky: ["#8fc8ee", "#e4f2fb"], facades: ["#d9a3a0", "#9dc7b4", "#a7bfdc", "#bba7cf", "#e8cf9a", "#d9a3a0"],
-    readings: [["South-facing gardens", "from listings", false], ["Morning light at the front", "sun path", true, 80], ["Primary, 6 min walk", "map data", true, 85], ["Conservation area", "council record", false]] },
-  { name: "Mercer Street", type: "Mansion flats", roof: "flat", accent: "#e8b84a", sky: ["#6f7fc0", "#d6b6c9"], facades: ["#e3dccb", "#e3dccb", "#b9a88a", "#e3dccb", "#e3dccb", "#b9a88a"],
-    readings: [["Lift in the building", "from the listing", false], ["Busy road at the end", "traffic data", true, 75], ["Station, 5 min walk", "map data", true, 95], ["Leasehold, 120 years", "from the listing", false]] },
-  { name: "Calder Terrace", type: "Ex-council blocks", roof: "block", accent: "#5cbf86", sky: ["#5fa6cf", "#c8ead9"], facades: ["#7f6a58", "#8a4636", "#7f6a58", "#7f6a58", "#8a4636", "#7f6a58"],
-    readings: [["Balconies on every flat", "from listings", false], ["Green space behind", "map data", true, 90], ["Calm, family street", "local reviews", true, 60], ["Share of freehold", "from the listing", false]] },
-  { name: "Wren Mews", type: "Converted stables", roof: "mews", accent: "#6aa6f0", sky: ["#2d3b78", "#c88a9b"], facades: ["#a7bfdc", "#e3dccb", "#9dc7b4", "#e3dccb", "#e8cf9a", "#e3dccb"],
-    readings: [["Cobbled, car-free lane", "map data", true, 95], ["Small or no gardens", "from listings", false], ["Very quiet at night", "traffic data", true, 80], ["Freehold", "from the listing", false]] },
+// Made-up readings: they show the format, never real data about a real place.
+const AREAS: { name: string; type: string; roof: Roof; accent: string; sky: [string, string]; facades: string[]; readings: [string, string, boolean, number?][] }[] = [
+  { name: "Blackheath", type: "Heath on the doorstep", roof: "gable", accent: "#5cbf86", sky: ["#5fa6cf", "#c8ead9"], facades: ["#cdb27a", "#94452f", "#ece6d6", "#a65a3e", "#d9c08c", "#7a3a2a"],
+    readings: [["Heath, a few minutes’ walk", "map data", false], ["Village-style high street", "map data", false], ["Quiet side roads", "traffic data", true, 75], ["Station on the doorstep", "map data", false]] },
+  { name: "Islington", type: "Outstanding schools nearby", roof: "gable", accent: "#ef8fa6", sky: ["#8fc8ee", "#e4f2fb"], facades: ["#d9a3a0", "#9dc7b4", "#a7bfdc", "#bba7cf", "#e8cf9a", "#d9a3a0"],
+    readings: [["Outstanding primaries within a walk", "inspection record", false], ["Georgian terraces", "from listings", false], ["Walk to school", "estimated on real routes", true, 85], ["Gardens on the squares", "map data", false]] },
+  { name: "Peckham", type: "A high street with feel", roof: "flat", accent: "#e8b84a", sky: ["#6f7fc0", "#d6b6c9"], facades: ["#e3dccb", "#e3dccb", "#b9a88a", "#e3dccb", "#e3dccb", "#b9a88a"],
+    readings: [["Independent high street", "map data", false], ["Cafés on the quiet side street", "map data", false], ["Evening feel", "local reviews", true, 65], ["Rail and Overground", "map data", false]] },
+  { name: "Southwark", type: "Door to desk under 30 min", roof: "block", accent: "#6aa6f0", sky: ["#2d3b78", "#c88a9b"], facades: ["#7f6a58", "#8a4636", "#7f6a58", "#7f6a58", "#8a4636", "#7f6a58"],
+    readings: [["Tube and rail within minutes", "map data", false], ["Under 30 min door to desk", "measured on real routes", true, 90], ["Thames path nearby", "map data", false], ["Balconies on newer blocks", "from listings", false]] },
 ];
 const DOORS = ["#c8102e", "#1d3a6b", "#1f5a3a", "#141414", "#e0b43c", "#6b2d5c"];
+
+const LIVE = [
+  { n: "1", place: "Parks and heaths", said: "Somewhere I can walk to Greenwich Park, Blackheath or Hampstead Heath.", read: "Park or heath ≤ 10 min walk" },
+  { n: "2", place: "Outstanding schools", said: "Outstanding primary and secondary schools within walking distance.", read: "Outstanding school ≤ 10 min walk" },
+  { n: "3", place: "High streets", said: "A quiet street, but near the cafés. A proper high street feel.", read: "Quiet street · high street ≤ 5 min" },
+  { n: "4", place: "Door to desk", said: "Under thirty minutes to the office, on the real route.", read: "≤ 30 min door to door by transit" },
+];
+
+const STEPS = [
+  { n: "1", rail: "Tell us", title: "Tell us your lifestyle.", line: "Say it in your own words, typed or spoken." },
+  { n: "2", rail: "Understand", title: "We understand your priorities.", line: "Not just bedrooms and price: your commute, schools, the street you’d want to live on." },
+  { n: "3", rail: "Search", title: "We search continuously.", line: "New properties are checked every day, so you never have to refresh." },
+  { n: "4", rail: "Match", title: "You get homes that match.", line: "No endless scrolling, and every match tells you why it made the list." },
+  { n: "5", rail: "One app", title: "One app, not five.", line: "No need to install five different property apps and refresh every search every day. We watch them all for you." },
+];
+
+const SUGGESTIONS = [
+  "Two-bed flat with a balcony, 20 min to Canary Wharf",
+  "Family house near a park and a good primary, under £800k",
+  "Somewhere quiet with lots of light, close to a station",
+];
+
+const BENEFITS = [
+  ["Early access before everyone else", "See new matches before anyone else does."],
+  ["Priority property matching", "Tell us once what you’re after. We’ll take it from there."],
+  ["Help shape what we build next", "Vote on features, test new tools early and talk directly with the team."],
+  ["Exclusive events and insights", "Members-only London market briefings and first look at new listings in your areas."],
+  ["Invite friends, earn rewards", "Every founding member gets a personal referral code. Earn points each time someone you invite joins."],
+];
+
+const CLAIMED = 37;
+
+const FAQ = [
+  ["How is this different from a normal property portal?", "Most portals make you guess the right combination of filters. With Property Scanner, you describe what you want in plain English, like “2-bed house in Greenwich under £500k with a garden”, and we translate that into a search for you. Then we keep running it, so you don’t have to."],
+  ["Which areas do you cover?", "We’re starting in London. Tell us where you’re looking when you sign up, and founding members help decide where we go next."],
+  ["Can I trust what the AI tells me about a property?", "Every match shows its source, the reason it was picked, and what we’re still unsure about. You can always check the original listing."],
+  ["Does AI decide the final match score?", "The score measures how well a home matches the brief you gave us, and every match lists the reasons behind it, so you can judge for yourself. Nobody can pay to change it."],
+  ["Will you contact an agent on my behalf?", "No. We find and explain the matches; you decide who to contact and when."],
+];
+
+const ASK = encodeURIComponent("Answer in short: what is Property Scanner (propertyscanner.com), how does it work, and who is it for?");
+const ASK_AI = [
+  ["ChatGPT", `https://chatgpt.com/?q=${ASK}`], ["Claude", `https://claude.ai/new?q=${ASK}`], ["Perplexity", `https://www.perplexity.ai/search?q=${ASK}`],
+  ["Gemini", `https://www.google.com/search?udm=50&q=${ASK}`], ["Grok", `https://grok.com/?q=${ASK}`],
+];
+const SOCIAL = [
+  ["Instagram", "https://www.instagram.com/propertyscannerltd"], ["LinkedIn", "https://www.linkedin.com/company/property-scanner-ltd/"],
+  ["Facebook", "https://www.facebook.com/profile.php?id=61592898344753"], ["TikTok", "https://www.tiktok.com/@propertyscannerltd"],
+];
 
 /** A small street scene for each card: the facades in its palette, lit windows, trees, a passing car. */
 function StreetArt({ id, roof, sky, facades }: { id: number; roof: Roof; sky: [string, string]; facades: string[] }) {
@@ -130,35 +188,6 @@ function StreetArt({ id, roof, sky, facades }: { id: number; roof: Roof; sky: [s
     </svg>
   );
 }
-
-// Example wishes only: the readings show the format, not real journey or distance data.
-const STOPS = [
-  { n: "1", place: "Westminster", said: "Somewhere I can walk along the river after work.", read: "Thames path ≤ 10 min walk" },
-  { n: "2", place: "The City", said: "Twenty minutes to the office, door to door. Bank, near St Paul's.", read: "≤ 20 min to Bank by Tube or on foot" },
-  { n: "3", place: "Hyde Park", said: "A proper park for the dog, not a patch of grass.", read: "Large park ≤ 10 min walk" },
-];
-
-const SUGGESTIONS = [
-  "Two-bed flat with a balcony, 20 min to Canary Wharf",
-  "Family house near a park and a good primary, under £800k",
-  "Somewhere quiet with lots of light, close to a station",
-];
-
-const FAQ = [
-  ["Where does it work?", "London only, for now. We're launching in one city so we can do it properly before going anywhere else."],
-  ["What do I actually type?", "Whatever you'd tell a friend who's helping you look. Budget, rooms, the commute, the feel of the street. No forms, no dropdowns."],
-  ["How do I know what's real?", "Every fact carries its source, like the listing or an official record. Anything we estimate is labelled as an estimate, with how confident we are."],
-  ["Does it replace estate agents?", "No. When you find a home you like, we draft the enquiry to the listing agent. You read it, change what you want, and send it yourself."],
-  ["Can I see it working?", "Yes. Book a demo and we'll run a live scan for the home you're looking for."],
-];
-
-const STEPS = [
-  { n: "1", title: "Describe it once.", line: "In your own words, the way you'd tell a friend. No dropdowns." },
-  { n: "2", title: "Refine it by chat.", line: "Push back like you would with a good agent. The scan narrows as you talk." },
-  { n: "3", title: "Decide on the few.", line: "A shortlist ranked by what you said matters, with the reasons shown." },
-  { n: "4", title: "Send in one go.", line: "We draft the enquiry. You read it, tweak it, send it." },
-];
-
 export default function Home() {
   return (
     <>
@@ -167,10 +196,10 @@ export default function Home() {
       <Experience />
 
       <div className="hud3d" aria-hidden="true">
-        {[["best", "Best fit", "94%"], ["", "Second", "88%"], ["", "Third", "81%"]].map(([cls, label, fit], i) => (
-          <div className={`rank ${cls}`} key={i}><div><b>{i + 1}</b>{label} · {fit}</div></div>
+        {RANKED.slice(0, 3).map(([, fit, label], i) => (
+          <div className={`rank ${i ? "" : "best"}`} key={i}><div><b>{i + 1}</b>{label} · {fit}</div></div>
         ))}
-        <div className="branch"><div><i />Leyton branch<em>Enquiry delivered</em></div></div>
+        <div className="branch"><div><i />12+ sources<em>One feed</em></div></div>
       </div>
 
       <nav className="dock" aria-label="Sections">
@@ -180,30 +209,33 @@ export default function Home() {
             <li key={id}><a href={`#${id}`} data-chapter={id} aria-label={label}><span className="dock-label">{label}</span><i /></a></li>
           ))}
         </ol>
-        <a href="#demo" className="btn btn-sm">Book a demo</a>
+        <a href="#join" className="btn btn-sm">Claim your place</a>
       </nav>
 
       <main>
         <section id="top" className="hero">
           <div className="hero-top">
             <span className="brand"><Mark />Property Scanner</span>
+            <nav className="hero-nav" aria-label="Page">
+              {NAV.map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}
+            </nav>
             <span className="drag-hint" aria-hidden="true"><DragIcon />Drag the city to look around</span>
           </div>
           <div className="spots" aria-hidden="true">
             {[0, 1, 2, 3, 4].map((i) => <div className="spot" key={i}><span className="spot-label" /></div>)}
           </div>
           <div className="hero-copy">
+            <p className="hero-status"><i aria-hidden="true" /><span>London. Founding member access is open. <b>{CLAIMED} of 100</b> places claimed</span></p>
             <h1 className="hero-title" data-reveal>
-              <span className="line"><span>Say what home</span></span>
-              <span className="line"><span>feels like.</span></span>
-              <span className="line voice"><span>We&rsquo;ll scan London for it.</span></span>
+              <span className="line"><span>Say it once.</span></span>
+              <span className="line voice"><span>We find your home.</span></span>
             </h1>
             <p className="hero-sub">
-              Property Scanner turns the way you actually talk about a home into a live search of London listings. Refine it by chat, see what&rsquo;s known and what&rsquo;s guessed, and send the enquiry.
+              Describe the home you want in your own words. Property Scanner keeps watching every London listing and tells you the moment something matches.
             </p>
             <div className="hero-cta">
-              <a href="#demo" className="btn">Book a demo <Arrow /></a>
-              <a href="#problem" className="link">Watch it scan <Arrow down /></a>
+              <a href="#join" className="btn">Claim your free founding place <Arrow /></a>
+              <a href="#scan" className="link">Watch it scan <Arrow down /></a>
             </div>
           </div>
 
@@ -212,13 +244,11 @@ export default function Home() {
               <span className="console-label">Your words</span>
               <span className="tag">Illustrative</span>
             </div>
-            <p className="console-words" id="q-text">
-              A quiet street, three beds, somewhere the kids can walk to a good primary. Under £650k.
-            </p>
+            <p className="console-words" id="q-text">{BRIEF}</p>
             <div className="console-rule" aria-hidden="true"><span id="q-bar" /></div>
             <span className="console-label">Read as</span>
             <ul className="chips" id="q-parse">
-              <li>3 bed</li><li>Low-traffic street</li><li>Primary ≤ 10 min walk</li><li>≤ £650k</li>
+              <li>3 beds</li><li>Garden</li><li>Under £450k</li><li>≤ 40 min to King&rsquo;s Cross</li><li>Outstanding school</li>
             </ul>
             <p className="console-count" id="q-count" aria-live="off">
               <b>—</b> homes scanned · <b className="y">—</b> match
@@ -226,183 +256,94 @@ export default function Home() {
           </figure>
         </section>
 
-        <section id="problem" className="problem">
+        <section id="scan" className="problem">
           <div className="sticky">
             <h2 className="problem-title">
-              <span className="voice">Buyers think in feelings.</span>
-              <span>Portals think in filters.</span>
+              <span className="voice">Watch one sentence</span>
+              <span>narrow down London.</span>
             </h2>
             <div className="feelings" aria-hidden="true">
-              {FEELINGS.map(([feel, label, value], i) => (
+              {FUNNEL.map(([feel, label, value], i) => (
                 <div className="feeling" key={i} style={{ "--i": i } as React.CSSProperties}>
                   <span className="feel"><i />&ldquo;{feel}&rdquo;</span>
-                  <span className="filt"><span>{label}</span><b>{value}<svg viewBox="0 0 10 10"><path d="M2 4l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg></b></span>
+                  <span className="filt"><span>{label}</span><b>{value}</b></span>
                   <span className="sweep" />
                 </div>
               ))}
-              <p className="keep"><span>Feelings still in the search</span><b id="keep-n">6</b></p>
+              <p className="keep"><span>Listings still in the search</span><b id="keep-n">{FUNNEL[0][2]}</b></p>
             </div>
             <ul className="sr-only">
-              {FEELINGS.map(([feel, label, value]) => <li key={feel}>&ldquo;{feel}&rdquo; becomes {label}: {value}</li>)}
+              {FUNNEL.map(([, label, value]) => <li key={label}>{label}: {value}</li>)}
             </ul>
             <p className="problem-coda">
-              Light, noise, the walk to school. None of it fits in a dropdown, so you scroll. <span className="voice">For months.</span>
+              Every dot is a London listing. <span className="voice">The brief switches off the rest.</span>
             </p>
           </div>
         </section>
 
-        <section id="compare" className="compare">
-          <h2>Same search. <span className="voice">One sentence.</span></h2>
+        <section id="results" className="compare">
+          <h2>One sentence in. <span className="voice">Three homes out.</span></h2>
           <div className="compare-grid">
-            <div className="side portal">
-              <h3>On a portal</h3>
-              <ul className="filter-wall">
-                {PORTAL.map(([label, value]) => (
-                  <li key={label}><span>{label}</span><b>{value}</b></li>
-                ))}
-              </ul>
-              <p className="side-note">Twelve dropdowns. Not one of them asks how the street feels.</p>
-            </div>
             <div className="side ours">
-              <h3>On Property Scanner</h3>
-              <p className="voice said">&ldquo;Three-bed with a garden on a quiet road, ten minutes&rsquo; walk to a good primary, under £650k. Somewhere that feels friendly.&rdquo;</p>
+              <h3>Your brief</h3>
+              <p className="voice said">&ldquo;{BRIEF}&rdquo;</p>
               <ul className="chips">
-                <li>3 bed</li><li>Garden</li><li>Low-traffic street</li><li>Primary ≤ 10 min walk</li><li>≤ £650k</li><li>Friendly street feel</li>
+                <li>3 beds</li><li>Garden</li><li>Under £450k</li><li>≤ 40 min to King&rsquo;s Cross</li><li>Outstanding school</li>
               </ul>
-              <p className="side-note">One sentence. The scan reads the rest, and tells you which parts it had to guess.</p>
+              <p className="side-note">Each match says what it confirmed and what it could not. Examples are illustrative.</p>
             </div>
-          </div>
-        </section>
-
-        <section id="how" className="how">
-          <div className="sticky">
-            <h2 className="how-title">Four moves from a feeling to a viewing.</h2>
-            <ol className="rail" aria-label="Steps">
-              {STEPS.map((s) => <li key={s.n} data-step={s.n}><span>{s.n}</span>{s.title}</li>)}
-            </ol>
-
-            <div className="steps">
-              <article className="step" data-step="1">
-                <h3><span className="num">1</span>{STEPS[0].title}</h3>
-                <p>{STEPS[0].line}</p>
-                <div className="ui ui-chat">
-                  <p className="bubble you">We&rsquo;re after a proper family house. Garden, three beds, quiet road, near a good primary. Zone 2 or 3, under £650k.</p>
-                  <p className="bubble sys">Scanning 1,940 London listings for that.</p>
-                </div>
-              </article>
-              <article className="step" data-step="2">
-                <h3><span className="num">2</span>{STEPS[1].title}</h3>
-                <p>{STEPS[1].line}</p>
-                <div className="ui ui-chat">
-                  <p className="bubble you">Nothing on a main road. And I&rsquo;d take a garden over a second bathroom.</p>
-                  <p className="bubble sys">Done. Dropped 31 homes on A-roads and ranked gardens higher. <b>9 left.</b></p>
-                </div>
-              </article>
-              <article className="step" data-step="3">
-                <h3><span className="num">3</span>{STEPS[2].title}</h3>
-                <p>{STEPS[2].line}</p>
-                <div className="ui ui-sheet">
-                  <div className="sheet-head"><b>Victorian terrace, Leyton E10</b><span>£625,000</span></div>
-                  <p className="sheet-meta">3 bed · 1 bath · 14 m garden</p>
+            <ol className="results">
+              {RESULTS.map((r) => (
+                <li className={`result${r.label ? " best" : ""}`} key={r.street}>
+                  <div className="result-head">
+                    <h3>{r.street}</h3>
+                    <span className="fit">{r.fit}%{r.label && <em>{r.label}</em>}</span>
+                  </div>
+                  <p className="result-meta">{r.meta}</p>
                   <ul>
-                    <li><Known /> Garden <em>from the listing</em></li>
-                    <li><Guessed /> 8 min walk to a primary <em>estimated</em></li>
-                    <li><Guessed /> Quiet street <em>70% sure</em></li>
+                    {r.confirmed.map((c) => <li key={c}><Known />{c}<em>confirmed</em></li>)}
+                    {r.unsure.map((c) => <li key={c}><Guessed />{c}<em>uncertain</em></li>)}
                   </ul>
-                </div>
-              </article>
-              <article className="step" data-step="4">
-                <h3><span className="num">4</span>{STEPS[3].title}</h3>
-                <p>{STEPS[3].line}</p>
-                <div className="ui ui-mail">
-                  <p className="mail-head">To: Leyton branch · Viewing request, Ashby Road</p>
-                  <p className="voice">Hi, we&rsquo;d love to view on Saturday morning. We&rsquo;re chain-free with a mortgage in principle, and the garden is exactly what we&rsquo;ve been looking for.</p>
-                  <span className="sent">Sent <Arrow /></span>
-                </div>
-              </article>
-            </div>
-            <p className="footnote">Listings, prices and messages shown are illustrative.</p>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
 
-        <section id="commute" className="commute">
+        <section id="live" className="how live">
           <div className="sticky">
-            <div className="commute-copy">
-              <h2>Commute, <span className="voice">not a radius.</span></h2>
-              <p>Portals draw a circle on a map. You live by a timetable. The scan measures how far you can get, door to door, by the routes you&rsquo;d actually take.</p>
-              <ul className="legend">
-                <li><svg className="tick" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="none" stroke="#f4f0e5" strokeWidth="1.4" strokeDasharray="2 1.6" /></svg><b>1-mile radius</b> the portal way</li>
-                <li><svg className="tick" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="2" fill="currentColor" /></svg><b>25 minutes door to door</b> along roads and rail</li>
-              </ul>
-              <p className="footnote-inline">Illustrative reach, not a real journey planner result.</p>
+            <h2 className="how-title"><span className="voice">Explore London</span> by the way you live.</h2>
+            <p className="how-sub">Describe the life you want, from canal-side flats in Little Venice to family terraces in Stoke Newington. We find the neighbourhoods.</p>
+            <ol className="rail" aria-label="Ways to live">
+              {LIVE.map((s) => <li key={s.n} data-stop={s.n}><span>{s.n}</span>{s.place}</li>)}
+            </ol>
+            <div className="steps">
+              {LIVE.map((s) => (
+                <article key={s.n} className="step" data-stop={s.n}>
+                  <h3><span className="num">{s.n}</span>{s.place}</h3>
+                  <div className="ui ui-chat">
+                    <p className="bubble you">{s.said}</p>
+                    <p className="bubble sys">Read as <b>{s.read}</b></p>
+                  </div>
+                </article>
+              ))}
             </div>
+            <p className="footnote">Examples are illustrative. Landmarks are stylised.</p>
           </div>
         </section>
 
-        <section id="schools" className="commute">
-          <div className="sticky">
-            <div className="commute-copy">
-              <h2>Schools, <span className="voice">by the walk.</span></h2>
-              <p>&ldquo;Near a good primary&rdquo; means a walk your kids can do, not a line on a catchment map. The scan measures the walk itself, and says which parts come from records and which are estimates.</p>
-              <ul className="legend">
-                <li><Known /><b>Inspection rating</b> from the official record</li>
-                <li><Guessed /><b>Walking time</b> estimated along real pavements</li>
-              </ul>
-              <p className="footnote-inline">Illustrative. Schools and ratings shown are not real data.</p>
-            </div>
-          </div>
-        </section>
-
-        <section id="quiet" className="commute">
-          <div className="sticky">
-            <div className="commute-copy">
-              <h2>Quiet, <span className="voice">but not dead.</span></h2>
-              <p>Quiet means different things to different people. The scan reads the road you&rsquo;d live on and the ones around it, day and night, and tells you how sure it is.</p>
-              <ul className="legend">
-                <li><Known /><b>Road type</b> from map data</li>
-                <li><Guessed /><b>Evening traffic</b> estimated, with a confidence score</li>
-              </ul>
-              <p className="footnote-inline">Illustrative. Not a real traffic reading.</p>
-            </div>
-          </div>
-        </section>
-
-        <section id="truth" className="truth">
-          <div className="sticky">
-            <div className="truth-copy">
-              <h2>
-                <span>Show what&rsquo;s known.</span>
-                <span className="voice">Label what&rsquo;s guessed.</span>
-              </h2>
-              <p>
-                Every fact carries its source. Anything we estimate says it&rsquo;s an estimate, with how sure we are. You never mistake a guess for a fact.
-              </p>
-              <ul className="legend">
-                <li><Known /> <b>Solid</b> means it came from the listing or an official record.</li>
-                <li><Guessed /> <b>Dashed</b> means we worked it out, and we show our confidence.</li>
-              </ul>
-            </div>
-            <div className="tags" aria-hidden="true">
-              <div className="tag3d known" data-anchor="-0.35,2.05,0"><Known /><span>3 bedrooms<em>from the listing</em></span></div>
-              <div className="tag3d known" data-anchor="-0.35,0.55,1.25"><Known /><span>£625,000 asking<em>from the listing</em></span></div>
-              <div className="tag3d guessed" data-anchor="0.5,1.4,0.2"><Guessed /><span>Quiet street<em>from traffic data · 70% sure</em></span></div>
-              <div className="tag3d guessed" data-anchor="0.45,0.25,2.0"><Guessed /><span>8 min walk to a primary<em>estimated from map data</em></span></div>
-            </div>
-          </div>
-        </section>
-
-        <section id="streets" className="streets">
+        <section id="areas" className="streets">
           <div className="sticky">
             <div className="streets-head">
-              <h2>Read a street <span className="voice">before you visit.</span></h2>
-              <p>Every street gets a reading. Facts are solid, guesses are dashed and come with a confidence score. These five streets are made up, to show the format.</p>
+              <h2>Featured areas. <span className="voice">Read them before you visit.</span></h2>
+              <p>Facts are solid, guesses are dashed and come with a confidence score. These four readings are illustrative, to show the format.</p>
             </div>
             <div className="street-track">
-              {STREETS.map((st, n) => (
+              {AREAS.map((st, n) => (
                 <article className="street-card" key={st.name} style={{ "--a": st.accent } as React.CSSProperties}>
                   <div className="street-art">
                     <StreetArt id={n} roof={st.roof} sky={st.sky} facades={st.facades} />
-                    <span className="street-no">0{n + 1} / 0{STREETS.length}</span>
+                    <span className="street-no">0{n + 1} / 0{AREAS.length}</span>
                   </div>
                   <div className="street-body">
                     <div className="street-title"><h3>{st.name}</h3><span className="street-type">{st.type}</span></div>
@@ -422,24 +363,102 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="around" className="how around">
+        <section id="how" className="how">
           <div className="sticky">
-            <h2 className="how-title">Search by what&rsquo;s near. <span className="voice">Not by postcode.</span></h2>
-            <ol className="rail" aria-label="Places">
-              {STOPS.map((s) => <li key={s.n} data-stop={s.n}><span>{s.n}</span>{s.place}</li>)}
+            <h2 className="how-title">You don&rsquo;t need to <span className="voice">search for a home anymore.</span></h2>
+            <p className="how-sub">Tell us once. We take care of the searching, the refreshing and the sorting.</p>
+            <ol className="rail" aria-label="Steps">
+              {STEPS.map((s) => <li key={s.n} data-step={s.n}><span>{s.n}</span>{s.rail}</li>)}
             </ol>
+
             <div className="steps">
-              {STOPS.map((s) => (
-                <article key={s.n} className="step" data-stop={s.n}>
-                  <h3><span className="num">{s.n}</span>{s.place}</h3>
-                  <div className="ui ui-chat">
-                    <p className="bubble you">{s.said}</p>
-                    <p className="bubble sys">Read as <b>{s.read}</b></p>
-                  </div>
-                </article>
-              ))}
+              <article className="step" data-step="1">
+                <h3><span className="num">1</span>{STEPS[0].title}</h3>
+                <p>{STEPS[0].line}</p>
+                <div className="ui ui-chat">
+                  <p className="bubble you">{BRIEF}</p>
+                  <p className="bubble sys">Got it. Scanning London for that.</p>
+                </div>
+              </article>
+              <article className="step" data-step="2">
+                <h3><span className="num">2</span>{STEPS[1].title}</h3>
+                <p>{STEPS[1].line}</p>
+                <div className="ui ui-chat">
+                  <p className="bubble you">And a quiet street, not a main road.</p>
+                  <p className="bubble sys">Read as <b>3 beds · garden · under £450k · ≤ 40 min to King&rsquo;s Cross · Outstanding school · quiet street.</b></p>
+                </div>
+              </article>
+              <article className="step" data-step="3">
+                <h3><span className="num">3</span>{STEPS[2].title}</h3>
+                <p>{STEPS[2].line}</p>
+                <div className="ui ui-sheet">
+                  <div className="sheet-head"><b>Scanning London</b><span>12 sources</span></div>
+                  <p className="sheet-meta">Checking new listings across 12 sources in real time</p>
+                  <ul>
+                    <li><Known /> Best matches <em>ranked by your brief</em></li>
+                    <li><Known /> New today <em>checked daily</em></li>
+                    <li><Known /> All matches <em>nothing to refresh</em></li>
+                  </ul>
+                </div>
+              </article>
+              <article className="step" data-step="4">
+                <h3><span className="num">4</span>{STEPS[3].title}</h3>
+                <p>{STEPS[3].line}</p>
+                <div className="ui ui-sheet">
+                  <div className="sheet-head"><b>Hemingford Road, Islington N1</b><span>97%</span></div>
+                  <p className="sheet-meta">£449,950 · 3 bed · 1,120 sq ft</p>
+                  <ul>
+                    <li><Known /> South-facing garden <em>confirmed</em></li>
+                    <li><Known /> 9 min walk to an Outstanding primary <em>confirmed</em></li>
+                    <li><Guessed /> Kitchen needs updating <em>uncertain</em></li>
+                  </ul>
+                </div>
+              </article>
+              <article className="step" data-step="5">
+                <h3><span className="num">5</span>{STEPS[4].title}</h3>
+                <p>{STEPS[4].line}</p>
+                <div className="ui ui-sheet">
+                  <div className="sheet-head"><b>Alerts</b><span>12+ sources</span></div>
+                  <p className="sheet-meta">One feed instead of five apps</p>
+                  <ul>
+                    <li><Known /> 12 new matches <em>2m ago</em></li>
+                    <li><Known /> Price drop <em>1h ago</em></li>
+                    <li><Known /> New listing <em>3h ago</em></li>
+                    <li><Known /> School catchment <em>5h ago</em></li>
+                  </ul>
+                </div>
+              </article>
             </div>
-            <p className="footnote">Examples are illustrative. Landmarks are stylised.</p>
+            <p className="footnote">Listings, prices and alerts shown are illustrative.</p>
+          </div>
+        </section>
+
+        <section id="rank" className="truth">
+          <div className="sticky">
+            <div className="truth-copy">
+              <h2>
+                <span>Ranked by match.</span>
+                <span className="voice">Never by fees.</span>
+              </h2>
+              <p>
+                Homes are ranked only by how well they fit your brief. Every listing shows its source, why it matched, and what we&rsquo;re still unsure about. Nobody can pay to change the order.
+              </p>
+              <ol className="ranked">
+                {RANKED.map(([street, fit, label], i) => (
+                  <li key={street} className={i === 3 ? "promoted" : ""}><span>{street}</span><em>{label}</em><b>{fit}</b></li>
+                ))}
+              </ol>
+              <ul className="legend">
+                <li><Known /> <b>Solid</b> means confirmed from the listing or a record.</li>
+                <li><Guessed /> <b>Dashed</b> means uncertain, and we say so.</li>
+              </ul>
+            </div>
+            <div className="tags" aria-hidden="true">
+              <div className="tag3d known" data-anchor="-0.35,2.05,0"><Known /><span>3 bedrooms<em>from the listing</em></span></div>
+              <div className="tag3d known" data-anchor="-0.35,0.55,1.25"><Known /><span>£449,950 asking<em>from the listing</em></span></div>
+              <div className="tag3d guessed" data-anchor="0.5,1.4,0.2"><Guessed /><span>Kitchen needs updating<em>uncertain</em></span></div>
+              <div className="tag3d guessed" data-anchor="0.45,0.25,2.0"><Guessed /><span>9 min walk to an Outstanding primary<em>estimated from map data</em></span></div>
+            </div>
           </div>
         </section>
 
@@ -465,25 +484,21 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="people" className="people">
-          <h2>Made for three kinds of London buyer.</h2>
-          <ol className="persona-list">
-            <li>
-              <h3>The time-poor buyer</h3>
-              <p className="said voice">&ldquo;Just find me three that are worth a Saturday.&rdquo;</p>
-              <p>Describe it once on the bus. Get a shortlist, not a feed.</p>
-            </li>
-            <li>
-              <h3>The careful first-time buyer</h3>
-              <p className="said voice">&ldquo;Is the quiet street actually quiet, or did the agent just say so?&rdquo;</p>
-              <p>Every fact shows its source. Every guess says it&rsquo;s a guess.</p>
-            </li>
-            <li>
-              <h3>The relocating family</h3>
-              <p className="said voice">&ldquo;We don&rsquo;t know London. We know we want a park and a good primary.&rdquo;</p>
-              <p>Search by how a place feels, in a city you&rsquo;ve never lived in.</p>
-            </li>
-          </ol>
+        <section id="founding" className="founding">
+          <div className="founding-head">
+            <h2>Be one of the first 100 in London.</h2>
+            <p>Joining is free for the first 100 members. <b>{CLAIMED} of 100</b> places claimed.</p>
+          </div>
+          <div className="founding-body">
+            <ol className="slots" aria-label={`${CLAIMED} of 100 founding places claimed`}>
+              {Array.from({ length: 100 }, (_, i) => (
+                <li key={i} className={i < CLAIMED ? "taken" : i === CLAIMED ? "next" : ""} style={{ "--s": i } as React.CSSProperties}>{i + 1}</li>
+              ))}
+            </ol>
+            <ul className="benefits">
+              {BENEFITS.map(([t, d]) => <li key={t}><h3>{t}</h3><p>{d}</p></li>)}
+            </ul>
+          </div>
         </section>
 
         <section id="faq" className="faq">
@@ -498,21 +513,33 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="demo" className="launch">
+        <section id="join" className="launch">
           <div className="launch-copy">
-            <h2>Launching in<br />London first.</h2>
+            <h2>Claim your<br />founding place.</h2>
             <p>
-              One city, done properly. Book a demo and we&rsquo;ll run a live scan for the home you&rsquo;re actually looking for.
+              London first. Be one of the first 100, tell us what you&rsquo;re after once, and we&rsquo;ll take it from there.
             </p>
           </div>
-          <DemoForm />
+          <JoinForm />
         </section>
       </main>
 
-      <footer className="foot">
-        <span className="brand"><Mark />Property Scanner</span>
-        <p>Listings, prices and messages on this page are illustrative examples.</p>
-        <p>© 2026 Property Scanner</p>
+      <footer className="foot" id="contact">
+        <div className="foot-main">
+          <span className="brand"><Mark />Property Scanner</span>
+          <p>Greenwich, London · © 2026 Property Scanner Ltd</p>
+          <p><a href="mailto:info@propertyscanner.com">info@propertyscanner.com</a></p>
+        </div>
+        <nav className="foot-links" aria-label="Footer">
+          <a href="https://www.propertyscanner.com/privacy">Privacy</a>
+          <a href="https://www.propertyscanner.com/terms">Terms</a>
+          {SOCIAL.map(([n, href]) => <a key={n} href={href} rel="noopener">{n}</a>)}
+          <a href="#top">Back to top</a>
+        </nav>
+        <p className="foot-ask">Ask AI about us:
+          {ASK_AI.map(([n, href]) => <a key={n} href={href} rel="noopener">{n}</a>)}
+        </p>
+        <p className="foot-note">Listings, prices and alerts on this page are illustrative examples.</p>
       </footer>
     </>
   );

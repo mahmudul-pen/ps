@@ -16,7 +16,7 @@ UK home buyers in the first launch area (London):
 - The relocating family: searches by feel (schools, commute, quiet) in an area they don't know.
 
 ## Product Purpose
-Property Scanner is AI property search. The buyer describes the home in plain words once, refines by chat, decides, and sends an enquiry. Landing page success: "Book a demo" requests.
+Property Scanner is AI property search. The buyer describes the home in plain words once, refines by chat, decides, and sends an enquiry. Landing page success: founding-100 sign-ups ("Claim your place"). Content mirrors https://www.propertyscanner.com/ (see docs/propertyscanner-landing-context.md).
 
 ## Positioning
 Buyers think in feelings, portals think in filters. Property Scanner turns feelings into a scan of real listings, and it shows what's known while labelling what's guessed.
